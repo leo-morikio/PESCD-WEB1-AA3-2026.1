@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Nova Oferta')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container" style="max-width:600px">
+    <h1 class="h3 mb-4">Nova Oferta</h1>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <!-- S.01 - Criar oferta -->
+    <form th:action="@{/secretario/ofertas/salvar}" method="post">
+
+        <!-- S.01 RN-1: nome opcional; gerado automaticamente se vazio -->
+        <div class="mb-3">
+            <label class="form-label">Nome da Oferta <span class="text-muted">(opcional)</span></label>
+            <input type="text" th:field="*{oferta.nome}" class="form-control"
+                   placeholder="Ex: PESCD 2026.2 (gerado automaticamente se vazio)" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Semestre *</label>
+            <input type="text" th:field="*{oferta.semestre}" class="form-control"
+                   placeholder="Ex: 2026.2" required />
+        </div>
+        <!-- S.01 RN-2: data fim deve ser após data início -->
+        <div class="row mb-3">
+            <div class="col">
+                <label class="form-label">Data de Início *</label>
+                <input type="date" th:field="*{oferta.dataInicio}" class="form-control" required />
+            </div>
+            <div class="col">
+                <label class="form-label">Data de Fim *</label>
+                <input type="date" th:field="*{oferta.dataFim}" class="form-control" required />
+            </div>
+        </div>
+        <!-- S.01 RN-3: professor responsável obrigatório -->
+        <div class="mb-4">
+            <label class="form-label">Professor Responsável *</label>
+            <select name="professorResponsavelId" class="form-select" required>
+                <option value="">Selecione...</option>
+                <option th:each="p : ${professores}"
+                        th:value="${p.id}"
+                        th:text="${p.nomeCompleto}"></option>
+            </select>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Criar Oferta</button>
+            <a th:href="@{/secretario/ofertas}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
