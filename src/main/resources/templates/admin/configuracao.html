@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Configuração')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container" style="max-width:600px">
+    <h1 class="h3 mb-4">Configuração do Sistema</h1>
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="card">
+        <div class="card-header fw-bold">Instruções de Encerramento de Oferta</div>
+        <div class="card-body">
+            <p class="text-muted small">
+                Este texto será exibido ao secretário no momento de encerrar uma oferta (S.04).
+            </p>
+            <form th:action="@{/admin/configuracao}" method="post">
+                <div class="mb-3">
+                    <textarea name="instrucaoEncerramento" class="form-control" rows="6"
+                              th:text="${config.instrucaoEncerramento}"
+                              placeholder="Ex: Verifique se todos os alunos estão com status 'concluído'..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
