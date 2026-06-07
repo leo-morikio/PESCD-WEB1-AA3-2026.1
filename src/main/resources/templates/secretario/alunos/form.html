@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Alunos da Oferta')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3">Alunos da Oferta: <span th:text="${oferta.nome}"></span></h1>
+        <a th:href="@{/secretario/ofertas/{id}(id=${oferta.id})}"
+           class="btn btn-outline-secondary btn-sm">← Voltar</a>
+    </div>
+
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div th:if="${errosCsv}" class="alert alert-warning">
+        <strong>E-mails com falha:</strong>
+        <ul class="mb-0 mt-1">
+            <li th:each="e : ${errosCsv}" th:text="${e}"></li>
+        </ul>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- S.02 - Inscrição manual -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">Inscrever aluno manualmente</div>
+                <div class="card-body">
+                    <form th:action="@{/secretario/ofertas/{id}/alunos/inscrever(id=${oferta.id})}" method="post">
+                        <div class="mb-3">
+                            <select name="alunoId" class="form-select" required>
+                                <option value="">Selecione um aluno...</option>
+                                <option th:each="a : ${alunos}"
+                                        th:value="${a.id}"
+                                        th:text="${a.nomeCompleto + ' (' + a.email + ')'}"></option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Inscrever</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- S.02 - Upload CSV -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">Importar via CSV</div>
+                <div class="card-body">
+                    <p class="text-muted small">Arquivo com e-mails, um por linha (ou separados por vírgula/ponto-e-vírgula).</p>
+                    <form th:action="@{/secretario/ofertas/{id}/alunos/upload-csv(id=${oferta.id})}"
+                          method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="file" name="arquivo" class="form-control"
+                                   accept=".csv,.txt" required />
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Importar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de inscritos -->
+    <h2 class="h5 mb-3">
+        Alunos Inscritos (<span th:text="${#lists.size(inscritos)}"></span>)
+    </h2>
+    <table class="table table-bordered table-hover">
+        <thead class="table-primary">
+        <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="i : ${inscritos}">
+            <td th:text="${i.aluno.nomeCompleto}"></td>
+            <td th:text="${i.aluno.email}"></td>
+            <td th:text="${i.status}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(inscritos)}">
+            <td colspan="3" class="text-center text-muted">Nenhum aluno inscrito.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
