@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Enviar Documentação de Ensino</title>
+</head>
+<body>
+
+<h1>Enviar Documentação de Ensino</h1>
+
+<form th:action="@{/aluno/documentacao/enviar/{id}(id=${inscricaoId})}"
+      th:object="${documentacao}"
+      method="post">
+
+    <p>
+        <label>Nome da instituição:</label>
+        <input type="text" th:field="*{nomeInstituicao}">
+    </p>
+    <p>
+        <label>Nome da disciplina:</label>
+        <input type="text" th:field="*{nomeDisciplina}">
+    </p>
+    <p>
+        <label>Curso da disciplina:</label>
+        <input type="text" th:field="*{curso}">
+    </p>
+    <p>
+        <label>Carga horária (horas):</label>
+        <input type="number" th:field="*{cargaHoraria}">
+    </p>
+
+    <button type="submit">Enviar Documentação</button>
+
+</form>
+
+</body>
+</html>

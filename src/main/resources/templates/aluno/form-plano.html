@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Enviar Plano de Trabalho</title>
+</head>
+<body>
+
+<h1>Enviar Plano de Trabalho</h1>
+
+<form th:action="@{/aluno/plano/enviar/{id}(id=${inscricaoId})}"
+      th:object="${plano}"
+      method="post">
+
+    <p>
+        <label>Código da disciplina:</label>
+        <input type="text" th:field="*{codigoDisciplina}">
+    </p>
+    <p>
+        <label>Nome da disciplina:</label>
+        <input type="text" th:field="*{nomeDisciplina}">
+    </p>
+    <p>
+        <label>Curso da disciplina:</label>
+        <input type="text" th:field="*{curso}">
+    </p>
+
+    <button type="submit">Enviar Plano</button>
+
+</form>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Enviar Relatório Final</title>
+</head>
+<body>
+
+<h1>Enviar Relatório Final do Estágio</h1>
+
+<form th:action="@{/aluno/relatorio/enviar/{id}(id=${inscricaoId})}"
+      th:object="${relatorio}"
+      method="post">
+
+    <p>
+        <label>Indicador de frequência (0 a 100%):</label>
+        <input type="number" th:field="*{indicadorFrequencia}" min="0" max="100">
+    </p>
+
+    <button type="submit">Enviar Relatório</button>
+
+</form>
+
+</body>
+</html>

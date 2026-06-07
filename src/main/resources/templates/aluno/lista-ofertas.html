@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Minhas Ofertas</title>
+</head>
+<body>
+
+<h1>Minhas Ofertas</h1>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Oferta</th>
+        <th>Semestre</th>
+        <th>Início</th>
+        <th>Fim</th>
+        <th>Professor Responsável</th>
+        <th>Status da Oferta</th>
+        <th>Meu Status</th>
+        <th>Ações</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="inscricao : ${inscricoes}">
+        <td th:text="${inscricao.oferta.nome}"></td>
+        <td th:text="${inscricao.oferta.semestre}"></td>
+        <td th:text="${inscricao.oferta.dataInicio}"></td>
+        <td th:text="${inscricao.oferta.dataFim}"></td>
+        <td th:text="${inscricao.oferta.professorResponsavel.nomeCompleto}"></td>
+        <td th:text="${inscricao.oferta.statusExibicao}"></td>
+        <td th:text="${inscricao.status}"></td>
+        <td>
+            <a th:href="@{/aluno/plano/novo/{id}(id=${inscricao.id})}">Enviar Plano</a>
+            <a th:href="@{/aluno/documentacao/novo/{id}(id=${inscricao.id})}">Enviar Documentação</a>
+            <a th:href="@{/aluno/relatorio/novo/{id}(id=${inscricao.id})}">Enviar Relatório</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
