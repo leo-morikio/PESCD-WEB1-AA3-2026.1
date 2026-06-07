@@ -4,6 +4,7 @@ import br.ufscar.dc.dsw.pescd.model.enums.StatusOferta;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ofertas")
@@ -31,6 +32,23 @@ public class Oferta {
     @ManyToOne
     @JoinColumn(name = "professor_responsavel_id", nullable = false)
     private Usuario professorResponsavel;
+
+    @ManyToOne
+    @JoinColumn(name = "criado_por_id")
+    private Usuario criadoPor;
+
+    @Column
+    private LocalDateTime criadoEm;
+
+    @ManyToOne
+    @JoinColumn(name = "encerrado_por_id")
+    private Usuario encerradoPor;
+
+    @Column
+    private LocalDateTime encerradoEm;
+
+    @Column(columnDefinition = "TEXT")
+    private String licoesAprendidas;
 
     // Status calculado — não persistido
     public String getStatusExibicao() {
@@ -61,4 +79,19 @@ public class Oferta {
 
     public Usuario getProfessorResponsavel() { return professorResponsavel; }
     public void setProfessorResponsavel(Usuario professorResponsavel) { this.professorResponsavel = professorResponsavel; }
+
+    public Usuario getCriadoPor() { return criadoPor; }
+    public void setCriadoPor(Usuario criadoPor) { this.criadoPor = criadoPor; }
+
+    public LocalDateTime getCriadoEm() { return criadoEm; }
+    public void setCriadoEm(LocalDateTime criadoEm) { this.criadoEm = criadoEm; }
+
+    public Usuario getEncerradoPor() { return encerradoPor; }
+    public void setEncerradoPor(Usuario encerradoPor) { this.encerradoPor = encerradoPor; }
+
+    public LocalDateTime getEncerradoEm() { return encerradoEm; }
+    public void setEncerradoEm(LocalDateTime encerradoEm) { this.encerradoEm = encerradoEm; }
+
+    public String getLicoesAprendidas() { return licoesAprendidas; }
+    public void setLicoesAprendidas(String licoesAprendidas) { this.licoesAprendidas = licoesAprendidas; }
 }
