@@ -3,7 +3,6 @@ package br.ufscar.dc.dsw.pescd.controller;
 import br.ufscar.dc.dsw.pescd.model.Oferta;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.model.enums.Perfil;
-import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
 import br.ufscar.dc.dsw.pescd.service.InscricaoOfertaService;
 import br.ufscar.dc.dsw.pescd.service.OfertaService;
 import br.ufscar.dc.dsw.pescd.service.UsuarioService;
@@ -17,7 +16,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 
 // S.02 - Secretário adiciona alunos à oferta (manual ou CSV)
@@ -33,9 +31,6 @@ public class SecretarioAlunoController {
 
     @Autowired
     private InscricaoOfertaService inscricaoService;
-
-    @Autowired
-    private UsuarioRepository usuarioRepository;
 
     // S.02 - Formulário para adicionar alunos
     @GetMapping
@@ -65,7 +60,7 @@ public class SecretarioAlunoController {
         return "redirect:/secretario/ofertas/" + ofertaId + "/alunos";
     }
 
-    // S.02 - Upload CSV com e-mails (um por linha)
+    // S.02 - Upload CSV formato RA,NOME COMPLETO,EMAIL
     @PostMapping("/upload-csv")
     public String uploadCsv(@PathVariable Long ofertaId,
                              @RequestParam("arquivo") MultipartFile arquivo,
@@ -74,18 +69,20 @@ public class SecretarioAlunoController {
             Oferta oferta = ofertaService.buscarPorId(ofertaId);
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8));
-            List<String> emails = reader.lines()
-                    .flatMap(linha -> Arrays.stream(linha.split("[,;]")))
-                    .map(String::trim)
-                    .filter(e -> !e.isBlank())
+
+            // Pula o cabeçalho e parseia cada linha em [ra, nome, email]
+            List<String[]> linhas = reader.lines()
+                    .skip(1)
+                    .filter(l -> !l.isBlank())
+                    .map(l -> l.split(",", 3))
                     .toList();
 
-            List<String> falhas = inscricaoService.inscreverPorEmails(emails, oferta, usuarioRepository);
+            List<String> falhas = inscricaoService.inscreverPorCsv(linhas, oferta);
 
             if (falhas.isEmpty()) {
-                ra.addFlashAttribute("sucesso", emails.size() + " aluno(s) inscritos com sucesso.");
+                ra.addFlashAttribute("sucesso", linhas.size() + " aluno(s) inscritos com sucesso.");
             } else {
-                ra.addFlashAttribute("sucesso", (emails.size() - falhas.size()) + " inscrito(s).");
+                ra.addFlashAttribute("sucesso", (linhas.size() - falhas.size()) + " inscrito(s).");
                 ra.addFlashAttribute("errosCsv", falhas);
             }
         } catch (Exception e) {
