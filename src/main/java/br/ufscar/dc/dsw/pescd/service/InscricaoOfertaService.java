@@ -3,11 +3,15 @@ package br.ufscar.dc.dsw.pescd.service;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.Oferta;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
+import br.ufscar.dc.dsw.pescd.model.enums.Perfil;
 import br.ufscar.dc.dsw.pescd.model.enums.StatusAluno;
 import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
+import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -15,6 +19,12 @@ public class InscricaoOfertaService {
 
     @Autowired
     private InscricaoOfertaRepository inscricaoRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<InscricaoOferta> listarPorOferta(Oferta oferta) {
         return inscricaoRepository.findByOferta(oferta);
@@ -40,24 +50,39 @@ public class InscricaoOfertaService {
     }
 
     /**
-     * S.02 CSV - Inscreve múltiplos alunos por e-mail.
-     * Retorna lista de e-mails que falharam (não encontrados ou já inscritos).
+     * S.02 CSV - Formato: RA,NOME COMPLETO,EMAIL (com cabeçalho).
+     * Se o aluno não existir no banco, cria com nomeUsuario=email, senha=RA.
+     * Retorna lista de linhas que falharam.
      */
-    public List<String> inscreverPorEmails(List<String> emails, Oferta oferta,
-                                           br.ufscar.dc.dsw.pescd.repository.UsuarioRepository usuarioRepository) {
-        List<String> falhas = new java.util.ArrayList<>();
-        for (String email : emails) {
-            String e = email.trim();
-            if (e.isBlank()) continue;
-            Usuario aluno = usuarioRepository.findByEmail(e);
-            if (aluno == null) {
-                falhas.add(e + " (não encontrado)");
+    public List<String> inscreverPorCsv(List<String[]> linhas, Oferta oferta) {
+        List<String> falhas = new ArrayList<>();
+        for (String[] campos : linhas) {
+            if (campos.length < 3) {
+                falhas.add(campos[0] + " (linha inválida)");
                 continue;
             }
+            String ra = campos[0].trim();
+            String nomeCompleto = campos[1].trim();
+            String email = campos[2].trim();
+
+            if (email.isBlank()) continue;
+
+            Usuario aluno = usuarioRepository.findByEmail(email);
+            if (aluno == null) {
+                // Cria o aluno: nomeUsuario=email, senha=RA
+                aluno = new Usuario();
+                aluno.setNomeCompleto(nomeCompleto);
+                aluno.setEmail(email);
+                aluno.setNomeUsuario(email);
+                aluno.setSenha(passwordEncoder.encode(ra));
+                aluno.setPerfil(Perfil.ALUNO);
+                usuarioRepository.save(aluno);
+            }
+
             try {
                 inscrever(aluno, oferta);
             } catch (RuntimeException ex) {
-                falhas.add(e + " (" + ex.getMessage() + ")");
+                falhas.add(email + " (" + ex.getMessage() + ")");
             }
         }
         return falhas;
