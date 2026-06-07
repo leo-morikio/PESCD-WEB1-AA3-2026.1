@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Usuários')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3">Gerenciamento de Usuários</h1>
+        <a th:href="@{/admin/usuarios/novo}" class="btn btn-primary">Novo Usuário</a>
+    </div>
+
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <table class="table table-bordered table-hover">
+        <thead class="table-primary">
+        <tr>
+            <th>ID</th>
+            <th>Nome Completo</th>
+            <th>E-mail</th>
+            <th>Usuário</th>
+            <th>Perfil</th>
+            <th>Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="u : ${usuarios}">
+            <td th:text="${u.id}"></td>
+            <td th:text="${u.nomeCompleto}"></td>
+            <td th:text="${u.email}"></td>
+            <td th:text="${u.nomeUsuario}"></td>
+            <td th:text="${u.perfil}"></td>
+            <td>
+                <a th:href="@{/admin/usuarios/editar/{id}(id=${u.id})}"
+                   class="btn btn-sm btn-outline-secondary">Editar</a>
+                <form th:action="@{/admin/usuarios/excluir/{id}(id=${u.id})}" method="post"
+                      class="d-inline"
+                      onsubmit="return confirm('Deseja remover este usuário?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(usuarios)}">
+            <td colspan="6" class="text-center text-muted">Nenhum usuário cadastrado.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
