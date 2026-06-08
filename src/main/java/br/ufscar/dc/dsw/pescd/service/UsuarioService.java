@@ -33,6 +33,11 @@ public class UsuarioService {
             throw new RuntimeException("E-mail já cadastrado: " + usuario.getEmail());
         }
 
+        Usuario existenteNome = usuarioRepository.findByNomeUsuario(usuario.getNomeUsuario());
+        if (existenteNome != null && !existenteNome.getId().equals(usuario.getId())) {
+            throw new RuntimeException("Nome de usuário já cadastrado: " + usuario.getNomeUsuario());
+        }
+
         if (usuario.getId() != null && (usuario.getSenha() == null || usuario.getSenha().isBlank())) {
             // Edição sem nova senha: mantém a senha atual do banco
             Usuario salvo = usuarioRepository.findById(usuario.getId()).get();
