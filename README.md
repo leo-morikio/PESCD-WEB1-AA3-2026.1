@@ -28,59 +28,72 @@ Acesse `http://localhost:8080`. Usuários de teste (senha: `123`):
 
 ## Integrantes e Contribuições
 
-### Leo Morikio (@leo_morikio)
-
-**User Stories implementadas:**
-
-- **U.01 — Login e autenticação**
-  - `SecurityConfig.java` — configuração do Spring Security com autorização por perfil (ADMIN, SECRETARIO, PROFESSOR, ALUNO)
-  - `LoginController.java` — página de login e redirecionamento por perfil após autenticação
-  - `UsuarioLogadoUtil.java` — utilitário para obter o usuário JPA do contexto de segurança
-  - Atualização do `DataLoader.java` com senhas BCrypt
-  - Template `login.html` com Bootstrap
+### Leo Morikio ([leo-morikio](https://github.com/leo-morikio))
 
 - **V.01 — Visitante visualiza lista de ofertas**
-  - `VisitanteController.java` — GET `/` lista todas as ofertas ordenadas por semestre
-  - `OfertaService.java` — serviço com lógica de negócio para ofertas
-  - Template `visitante/lista-ofertas.html`
+  - `VisitanteController.java`, `OfertaService.java`, template `visitante/lista-ofertas.html`
 
-- *(Adicionar links para commits após push)*
+- **U.01 — Login e autenticação**
+  - `SecurityConfig.java`, `LoginController.java`, `UsuarioLogadoUtil.java`, template `login.html`
 
----
-
-### Membro 2 — [Nome] (@[github])
-
-**User Stories implementadas:**
-
-- **AD.01 — Administrador gerencia usuários**
-  - `UsuarioService.java`, `AdminUsuarioController.java`
-  - Templates `admin/usuarios/lista.html`, `admin/usuarios/form.html`
+- **AD.01 — Administrador gerencia usuários (CRUD)**
+  - `AdminUsuarioController.java`, `UsuarioService.java`, templates `admin/usuarios/`
 
 - **S.01 — Secretário cria oferta**
-  - `SecretarioController.java` (criação de oferta)
-  - Template `secretario/ofertas/form.html`
+  - `SecretarioController.java` (criação), template `secretario/ofertas/form.html`
 
 - **S.02 — Secretário adiciona alunos (manual e CSV)**
-  - `InscricaoOfertaService.java`, `SecretarioAlunoController.java`
-  - Template `secretario/alunos/form.html`
+  - `SecretarioAlunoController.java`, `InscricaoOfertaService.java`, template `secretario/alunos/form.html`
 
 - **S.03 — Secretário acompanha ofertas**
-  - Template `secretario/ofertas/lista.html`, `secretario/ofertas/detalhes.html`
+  - Templates `secretario/ofertas/lista.html`, `secretario/ofertas/detalhes.html`, `secretario/alunos/detalhes.html`
 
 - **S.04 — Secretário encerra oferta**
-  - `SecretarioController.java` (endpoints de encerramento)
+  - `SecretarioController.java` (encerramento)
 
-- *(Adicionar links para commits após push)*
+- Adicionou dependência H2 e `DataLoader`
 
 ---
 
-### Membro 3 — [Nome] (@[github])
+### Matheus Strito ([matheusstrito](https://github.com/matheusstrito))
 
-**User Stories implementadas:**
+- **AL.01 — Aluno visualiza suas ofertas**
+  - `OfertaAlunoController.java`, template `aluno/lista-ofertas.html`
 
-- *(Preencher)*
+- **AL.02 — Aluno envia plano de trabalho**
+  - `PlanoTrabalhoController.java`, `PlanoTrabalhoService.java`, template `aluno/form-plano.html`
 
-- *(Adicionar links para commits após push)*
+- **AL.03 — Aluno envia relatório final**
+  - `RelatorioFinalController.java`, `RelatorioFinalService.java`, template `aluno/form-relatorio.html`
+
+- **AL.04 — Aluno envia documentação de ensino**
+  - `DocumentacaoEnsinoController.java`, `DocumentacaoEnsinoService.java`, template `aluno/form-documentacao.html`
+
+- Adicionou dependência H2 e `DataLoader`
+
+---
+
+### JLGPelegrino ([JLGPelegrino](https://github.com/JLGPelegrino))
+
+- **PS.01 — Professor supervisor acompanha inscrições**
+  - `ProfessorSupervisorController.java`, template `professor/supervisor/ofertas.html`
+
+- **PS.02 — Professor supervisor aprova plano de trabalho**
+  - `ProfessorSupervisorController.java`, template `professor/supervisor/aprovar-plano.html`
+
+- **PS.03 — Professor supervisor aprova relatório final**
+  - `ProfessorSupervisorController.java`, template `professor/supervisor/aprovar-relatorio.html`
+
+- **PR.01 — Professor responsável conclui relatório**
+  - `ProfessorResponsavelController.java`, template `professor/responsavel/concluir-relatorio.html`
+
+- **PR.02 — Professor responsável analisa documentação**
+  - `ProfessorResponsavelController.java`, template `professor/responsavel/analisar-documentacao.html`
+
+- **PR.03 — Professor responsável encerra oferta**
+  - `ProfessorResponsavelController.java`, template `professor/responsavel/ofertas.html`
+
+- `ProfessorController.java`, template `professor/index.html`
 
 ---
 
