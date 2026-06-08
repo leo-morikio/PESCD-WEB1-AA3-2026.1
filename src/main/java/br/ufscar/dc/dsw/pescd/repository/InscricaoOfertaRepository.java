@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface InscricaoOfertaRepository extends JpaRepository<InscricaoOferta, Long> {
     List<InscricaoOferta> findByAluno(Usuario aluno);
     List<InscricaoOferta> findByOferta(Oferta oferta);
+    List<InscricaoOferta> findByProfessorSupervisor(Usuario professor);
     Optional<InscricaoOferta> findByAlunoAndOferta(Usuario aluno, Oferta oferta);
     long countByOferta(Oferta oferta);
 }
