@@ -17,6 +17,9 @@
 <div class="container mt-4">
     <h1 class="mb-4">Minhas Ofertas</h1>
 
+    <div th:if="${erro}" class="alert alert-danger" th:text="${erro}"></div>
+    <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+
     <table class="table table-striped table-bordered align-middle">
         <thead class="table-light">
         <tr>
@@ -38,7 +41,7 @@
             <td th:text="${inscricao.oferta.dataFim}"></td>
             <td th:text="${inscricao.oferta.professorResponsavel.nomeCompleto}"></td>
             <td th:text="${inscricao.oferta.statusExibicao}"></td>
-            <td th:text="${inscricao.status}"></td>
+            <td th:text="${inscricao.statusExibicao}"></td>
             <td>
                 <a class="btn btn-primary btn-sm" th:href="@{/aluno/plano/novo/{id}(id=${inscricao.id})}">Enviar Plano</a>
                 <a class="btn btn-secondary btn-sm" th:href="@{/aluno/documentacao/novo/{id}(id=${inscricao.id})}">Enviar Documentação</a>

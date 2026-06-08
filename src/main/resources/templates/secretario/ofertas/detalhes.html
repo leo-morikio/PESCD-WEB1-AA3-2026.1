@@ -48,6 +48,34 @@
         </div>
     </div>
 
+    <!-- S.03 RN-2 - Alunos inscritos e status -->
+    <h2 class="h5 mb-3">Alunos Inscritos</h2>
+    <div th:if="${#lists.isEmpty(inscritos)}" class="alert alert-info mb-4">
+        Nenhum aluno inscrito nesta oferta.
+    </div>
+    <table th:if="${!#lists.isEmpty(inscritos)}" class="table table-bordered table-hover mb-4">
+        <thead class="table-primary">
+        <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="i : ${inscritos}">
+            <td th:text="${i.aluno.nomeCompleto}"></td>
+            <td th:text="${i.aluno.email}"></td>
+            <td th:text="${i.statusExibicao}"></td>
+            <td>
+                <!-- S.03 RN-3 -->
+                <a th:href="@{/secretario/ofertas/{oid}/alunos/{iid}(oid=${oferta.id},iid=${i.id})}"
+                   class="btn btn-sm btn-outline-info">Ver Detalhes</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
     <a th:href="@{/secretario/ofertas/{id}/alunos(id=${oferta.id})}"
        class="btn btn-outline-primary mb-4">Gerenciar Alunos</a>
 

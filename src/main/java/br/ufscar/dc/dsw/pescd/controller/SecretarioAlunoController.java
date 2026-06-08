@@ -1,8 +1,14 @@
 package br.ufscar.dc.dsw.pescd.controller;
 
+import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.Oferta;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.model.enums.Perfil;
+import br.ufscar.dc.dsw.pescd.repository.DocumentacaoEnsinoRepository;
+import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
+import br.ufscar.dc.dsw.pescd.repository.LogStatusRepository;
+import br.ufscar.dc.dsw.pescd.repository.PlanoTrabalhoRepository;
+import br.ufscar.dc.dsw.pescd.repository.RelatorioFinalRepository;
 import br.ufscar.dc.dsw.pescd.service.InscricaoOfertaService;
 import br.ufscar.dc.dsw.pescd.service.OfertaService;
 import br.ufscar.dc.dsw.pescd.service.UsuarioService;
@@ -32,6 +38,38 @@ public class SecretarioAlunoController {
     @Autowired
     private InscricaoOfertaService inscricaoService;
 
+    @Autowired
+    private InscricaoOfertaRepository inscricaoRepository;
+
+    @Autowired
+    private PlanoTrabalhoRepository planoRepository;
+
+    @Autowired
+    private RelatorioFinalRepository relatorioRepository;
+
+    @Autowired
+    private DocumentacaoEnsinoRepository documentacaoRepository;
+
+    @Autowired
+    private LogStatusRepository logStatusRepository;
+
+    // S.03 RN-3 - Detalhes do aluno na inscrição (info + logs)
+    @GetMapping("/{inscricaoId}")
+    public String detalhesAluno(@PathVariable Long ofertaId,
+                                @PathVariable Long inscricaoId,
+                                Model model) {
+        Oferta oferta = ofertaService.buscarPorId(ofertaId);
+        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
+                .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
+        model.addAttribute("oferta", oferta);
+        model.addAttribute("inscricao", inscricao);
+        model.addAttribute("plano", planoRepository.findByInscricao(inscricao).orElse(null));
+        model.addAttribute("relatorio", relatorioRepository.findByInscricao(inscricao).orElse(null));
+        model.addAttribute("documentacao", documentacaoRepository.findByInscricao(inscricao).orElse(null));
+        model.addAttribute("logs", logStatusRepository.findByInscricao(inscricao));
+        return "secretario/alunos/detalhes";
+    }
+
     // S.02 - Formulário para adicionar alunos
     @GetMapping
     public String formAlunos(@PathVariable Long ofertaId, Model model) {
@@ -41,6 +79,9 @@ public class SecretarioAlunoController {
         model.addAttribute("alunos", usuarioService.listarTodos().stream()
                 .filter(u -> u.getPerfil() == Perfil.ALUNO)
                 .toList());
+        model.addAttribute("professores", usuarioService.listarTodos().stream()
+                .filter(u -> u.getPerfil() == Perfil.PROFESSOR)
+                .toList());
         return "secretario/alunos/form";
     }
 
@@ -48,11 +89,13 @@ public class SecretarioAlunoController {
     @PostMapping("/inscrever")
     public String inscrever(@PathVariable Long ofertaId,
                             @RequestParam Long alunoId,
+                            @RequestParam(required = false) Long supervisorId,
                             RedirectAttributes ra) {
         try {
             Oferta oferta = ofertaService.buscarPorId(ofertaId);
             Usuario aluno = usuarioService.buscarPorId(alunoId);
-            inscricaoService.inscrever(aluno, oferta);
+            Usuario supervisor = supervisorId != null ? usuarioService.buscarPorId(supervisorId) : null;
+            inscricaoService.inscrever(aluno, oferta, supervisor);
             ra.addFlashAttribute("sucesso", "Aluno inscrito com sucesso.");
         } catch (RuntimeException e) {
             ra.addFlashAttribute("erro", e.getMessage());

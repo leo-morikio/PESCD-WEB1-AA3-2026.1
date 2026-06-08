@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Detalhes do Aluno')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3">Detalhes do Aluno</h1>
+        <a th:href="@{/secretario/ofertas/{id}(id=${oferta.id})}"
+           class="btn btn-outline-secondary btn-sm">← Voltar</a>
+    </div>
+
+    <!-- Dados do aluno -->
+    <div class="card mb-4">
+        <div class="card-header fw-bold">Aluno</div>
+        <div class="card-body">
+            <table class="table table-sm mb-0">
+                <tr><th>Nome</th><td th:text="${inscricao.aluno.nomeCompleto}"></td></tr>
+                <tr><th>E-mail</th><td th:text="${inscricao.aluno.email}"></td></tr>
+                <tr><th>Oferta</th><td th:text="${oferta.nome}"></td></tr>
+                <tr><th>Status</th><td th:text="${inscricao.statusExibicao}"></td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Plano de Trabalho -->
+    <div class="card mb-4">
+        <div class="card-header fw-bold">Plano de Trabalho</div>
+        <div class="card-body">
+            <div th:if="${plano != null}">
+                <table class="table table-sm mb-0">
+                    <tr><th>Código da Disciplina</th><td th:text="${plano.codigoDisciplina}"></td></tr>
+                    <tr><th>Nome da Disciplina</th><td th:text="${plano.nomeDisciplina}"></td></tr>
+                    <tr><th>Curso</th><td th:text="${plano.curso}"></td></tr>
+                </table>
+            </div>
+            <p th:if="${plano == null}" class="text-muted mb-0">Nenhum plano enviado.</p>
+        </div>
+    </div>
+
+    <!-- Relatório Final -->
+    <div class="card mb-4">
+        <div class="card-header fw-bold">Relatório Final</div>
+        <div class="card-body">
+            <div th:if="${relatorio != null}">
+                <table class="table table-sm mb-0">
+                    <tr><th>Indicador de Frequência</th><td th:text="${relatorio.indicadorFrequencia + '%'}"></td></tr>
+                </table>
+            </div>
+            <p th:if="${relatorio == null}" class="text-muted mb-0">Nenhum relatório enviado.</p>
+        </div>
+    </div>
+
+    <!-- Documentação de Ensino -->
+    <div class="card mb-4">
+        <div class="card-header fw-bold">Documentação de Ensino</div>
+        <div class="card-body">
+            <div th:if="${documentacao != null}">
+                <table class="table table-sm mb-0">
+                    <tr><th>Instituição</th><td th:text="${documentacao.nomeInstituicao}"></td></tr>
+                    <tr><th>Disciplina</th><td th:text="${documentacao.nomeDisciplina}"></td></tr>
+                    <tr><th>Curso</th><td th:text="${documentacao.curso}"></td></tr>
+                    <tr><th>Carga Horária</th><td th:text="${documentacao.cargaHoraria + 'h'}"></td></tr>
+                </table>
+            </div>
+            <p th:if="${documentacao == null}" class="text-muted mb-0">Nenhuma documentação enviada.</p>
+        </div>
+    </div>
+
+    <!-- S.03 RN-3 - Logs de mudança de status -->
+    <div class="card mb-4">
+        <div class="card-header fw-bold">Histórico de Status</div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(logs)}" class="text-muted">Nenhuma mudança de status registrada.</div>
+            <table th:if="${!#lists.isEmpty(logs)}" class="table table-sm table-bordered mb-0">
+                <thead class="table-secondary">
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>De</th>
+                    <th>Para</th>
+                    <th>Responsável</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="log : ${logs}">
+                    <td th:text="${log.dataHora}"></td>
+                    <td th:text="${log.statusAnterior != null ? log.statusAnterior : '-'}"></td>
+                    <td th:text="${log.statusNovo}"></td>
+                    <td th:text="${log.usuarioResponsavel != null ? log.usuarioResponsavel.nomeCompleto : '-'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

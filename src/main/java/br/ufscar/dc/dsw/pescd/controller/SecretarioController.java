@@ -6,6 +6,7 @@ import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.model.enums.Perfil;
 import br.ufscar.dc.dsw.pescd.model.enums.StatusOferta;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
+import br.ufscar.dc.dsw.pescd.service.InscricaoOfertaService;
 import br.ufscar.dc.dsw.pescd.service.OfertaService;
 import br.ufscar.dc.dsw.pescd.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class SecretarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private InscricaoOfertaService inscricaoService;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -84,6 +88,7 @@ public class SecretarioController {
         Oferta oferta = ofertaService.buscarPorId(id);
         model.addAttribute("oferta", oferta);
         model.addAttribute("ofertaService", ofertaService);
+        model.addAttribute("inscritos", inscricaoService.listarPorOferta(oferta));
         return "secretario/ofertas/detalhes";
     }
 

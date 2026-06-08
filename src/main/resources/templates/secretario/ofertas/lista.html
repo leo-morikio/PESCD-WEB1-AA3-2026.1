@@ -36,9 +36,10 @@
             <td th:text="${o.professorResponsavel.nomeCompleto}"></td>
             <td th:text="${ofertaService.contarAlunos(o)}"></td>
             <td>
-                <span th:text="${o.status}"
-                      th:classappend="${o.status.name() == 'ATIVA'} ? 'badge bg-success' :
-                                      (${o.status.name() == 'CONCLUIDA'} ? 'badge bg-secondary' : 'badge bg-warning text-dark')">
+                <span th:text="${o.statusExibicao}"
+                      th:classappend="${o.statusExibicao == 'Em andamento'} ? 'badge bg-success' :
+                                      (${o.statusExibicao == 'Concluída'} ? 'badge bg-secondary' :
+                                      (${o.statusExibicao == 'Em atraso'} ? 'badge bg-danger' : 'badge bg-warning text-dark'))">
                 </span>
             </td>
             <td>
