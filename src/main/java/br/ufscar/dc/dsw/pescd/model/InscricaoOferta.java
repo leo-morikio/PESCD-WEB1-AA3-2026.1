@@ -40,5 +40,16 @@ public class InscricaoOferta {
     public void setProfessorSupervisor(Usuario professorSupervisor) { this.professorSupervisor = professorSupervisor; }
 
     public StatusAluno getStatus() { return status; }
+    public String getStatusExibicao() {
+        return switch (status) {
+            case NAO_ENVIADO -> "Não enviado";
+            case PLANO_ENVIADO -> "Plano enviado";
+            case PLANO_APROVADO -> "Plano aprovado";
+            case DOCUMENTACAO_ENVIADA -> "Documentação enviada";
+            case RELATORIO_ENVIADO -> "Relatório enviado";
+            case RELATORIO_APROVADO_SUPERVISOR -> "Relatório aprovado pelo supervisor";
+            case CONCLUIDO_RESPONSAVEL -> "Concluído";
+        };
+    }
     public void setStatus(StatusAluno status) { this.status = status; }
 }
