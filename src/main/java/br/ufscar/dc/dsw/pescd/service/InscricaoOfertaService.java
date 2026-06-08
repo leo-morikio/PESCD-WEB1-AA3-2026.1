@@ -26,6 +26,9 @@ public class InscricaoOfertaService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private LogStatusService logStatusService;
+
     public List<InscricaoOferta> listarPorOferta(Oferta oferta) {
         return inscricaoRepository.findByOferta(oferta);
     }
@@ -47,6 +50,8 @@ public class InscricaoOfertaService {
         inscricao.setOferta(oferta);
         inscricao.setStatus(StatusAluno.NAO_ENVIADO);
         inscricaoRepository.save(inscricao);
+
+        logStatusService.registrar(inscricao, null, StatusAluno.NAO_ENVIADO);
     }
 
     /**

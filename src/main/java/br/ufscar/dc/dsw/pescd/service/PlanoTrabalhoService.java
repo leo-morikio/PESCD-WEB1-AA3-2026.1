@@ -17,6 +17,9 @@ public class PlanoTrabalhoService {
     @Autowired
     private InscricaoOfertaRepository inscricaoRepository;
 
+    @Autowired
+    private LogStatusService logStatusService;
+
     public void enviarPlano(Long inscricaoId, PlanoTrabalho plano) {
         InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
                 .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
@@ -24,7 +27,10 @@ public class PlanoTrabalhoService {
         plano.setInscricao(inscricao);
         planoRepository.save(plano);
 
+        StatusAluno anterior = inscricao.getStatus();
         inscricao.setStatus(StatusAluno.PLANO_ENVIADO);
         inscricaoRepository.save(inscricao);
+
+        logStatusService.registrar(inscricao, anterior, StatusAluno.PLANO_ENVIADO);
     }
 }

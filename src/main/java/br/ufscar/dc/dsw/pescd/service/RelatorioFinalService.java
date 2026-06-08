@@ -17,6 +17,9 @@ public class RelatorioFinalService {
     @Autowired
     private InscricaoOfertaRepository inscricaoRepository;
 
+    @Autowired
+    private LogStatusService logStatusService;
+
     public void enviarRelatorio(Long inscricaoId, RelatorioFinal relatorio) {
         InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
                 .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
@@ -28,7 +31,10 @@ public class RelatorioFinalService {
         relatorio.setInscricao(inscricao);
         relatorioRepository.save(relatorio);
 
+        StatusAluno anterior = inscricao.getStatus();
         inscricao.setStatus(StatusAluno.RELATORIO_ENVIADO);
         inscricaoRepository.save(inscricao);
+
+        logStatusService.registrar(inscricao, anterior, StatusAluno.RELATORIO_ENVIADO);
     }
 }

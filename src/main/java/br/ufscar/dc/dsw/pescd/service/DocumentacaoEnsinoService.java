@@ -17,14 +17,20 @@ public class DocumentacaoEnsinoService {
     @Autowired
     private InscricaoOfertaRepository inscricaoRepository;
 
+    @Autowired
+    private LogStatusService logStatusService;
+
     public void enviarDocumentacao(Long inscricaoId, DocumentacaoEnsino documentacao) {
         InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
                 .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
 
+        StatusAluno anterior = inscricao.getStatus();
         documentacao.setInscricao(inscricao);
         documentacaoRepository.save(documentacao);
 
         inscricao.setStatus(StatusAluno.DOCUMENTACAO_ENVIADA);
         inscricaoRepository.save(inscricao);
+
+        logStatusService.registrar(inscricao, anterior, StatusAluno.DOCUMENTACAO_ENVIADA);
     }
 }
