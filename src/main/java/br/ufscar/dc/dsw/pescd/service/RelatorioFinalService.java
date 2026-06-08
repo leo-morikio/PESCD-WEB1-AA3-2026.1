@@ -8,6 +8,8 @@ import br.ufscar.dc.dsw.pescd.repository.RelatorioFinalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class RelatorioFinalService {
 
@@ -21,8 +23,11 @@ public class RelatorioFinalService {
     private LogStatusService logStatusService;
 
     public void enviarRelatorio(Long inscricaoId, RelatorioFinal relatorio) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
-                .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
+        Optional<InscricaoOferta> opt = inscricaoRepository.findById(inscricaoId);
+        if (!opt.isPresent()) {
+            throw new RuntimeException("Inscrição não encontrada");
+        }
+        InscricaoOferta inscricao = opt.get();
 
         if (inscricao.getStatus() != StatusAluno.PLANO_APROVADO) {
             throw new RuntimeException("O plano precisa estar aprovado antes de enviar o relatório.");

@@ -8,6 +8,8 @@ import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class DocumentacaoEnsinoService {
 
@@ -21,8 +23,11 @@ public class DocumentacaoEnsinoService {
     private LogStatusService logStatusService;
 
     public void enviarDocumentacao(Long inscricaoId, DocumentacaoEnsino documentacao) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
-                .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
+        Optional<InscricaoOferta> opt = inscricaoRepository.findById(inscricaoId);
+        if (!opt.isPresent()) {
+            throw new RuntimeException("Inscrição não encontrada");
+        }
+        InscricaoOferta inscricao = opt.get();
 
         StatusAluno anterior = inscricao.getStatus();
         documentacao.setInscricao(inscricao);

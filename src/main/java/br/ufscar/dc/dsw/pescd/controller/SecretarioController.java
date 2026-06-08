@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 // S.01, S.03, S.04 - Secretário gerencia ofertas
@@ -47,10 +48,15 @@ public class SecretarioController {
     // S.01 - Formulário nova oferta
     @GetMapping("/ofertas/nova")
     public String novaOferta(Model model) {
+        List<Usuario> todos = usuarioService.listarTodos();
+        List<Usuario> professores = new ArrayList<>();
+        for (Usuario u : todos) {
+            if (u.getPerfil() == Perfil.PROFESSOR) {
+                professores.add(u);
+            }
+        }
         model.addAttribute("oferta", new Oferta());
-        model.addAttribute("professores", usuarioService.listarTodos().stream()
-                .filter(u -> u.getPerfil() == Perfil.PROFESSOR)
-                .toList());
+        model.addAttribute("professores", professores);
         return "secretario/ofertas/form";
     }
 

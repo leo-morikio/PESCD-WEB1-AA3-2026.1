@@ -10,6 +10,8 @@ import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class PlanoTrabalhoService {
 
@@ -26,11 +28,17 @@ public class PlanoTrabalhoService {
     private LogStatusService logStatusService;
 
     public void enviarPlano(Long inscricaoId, PlanoTrabalho plano, Long supervisorId) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
-                .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
+        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
+        if (!optInscricao.isPresent()) {
+            throw new RuntimeException("Inscrição não encontrada");
+        }
+        InscricaoOferta inscricao = optInscricao.get();
 
-        Usuario supervisor = usuarioRepository.findById(supervisorId)
-                .orElseThrow(() -> new RuntimeException("Professor supervisor não encontrado"));
+        Optional<Usuario> optSupervisor = usuarioRepository.findById(supervisorId);
+        if (!optSupervisor.isPresent()) {
+            throw new RuntimeException("Professor supervisor não encontrado");
+        }
+        Usuario supervisor = optSupervisor.get();
         inscricao.setProfessorSupervisor(supervisor);
 
         plano.setInscricao(inscricao);

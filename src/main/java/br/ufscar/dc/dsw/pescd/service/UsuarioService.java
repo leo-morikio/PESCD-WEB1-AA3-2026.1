@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UsuarioService {
@@ -22,8 +23,11 @@ public class UsuarioService {
     }
 
     public Usuario buscarPorId(Long id) {
-        return usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + id));
+        Optional<Usuario> opt = usuarioRepository.findById(id);
+        if (!opt.isPresent()) {
+            throw new RuntimeException("Usuário não encontrado: " + id);
+        }
+        return opt.get();
     }
 
     public void salvar(Usuario usuario) {
@@ -40,8 +44,10 @@ public class UsuarioService {
 
         if (usuario.getId() != null && (usuario.getSenha() == null || usuario.getSenha().isBlank())) {
             // Edição sem nova senha: mantém a senha atual do banco
-            Usuario salvo = usuarioRepository.findById(usuario.getId()).get();
-            usuario.setSenha(salvo.getSenha());
+            Optional<Usuario> optSalvo = usuarioRepository.findById(usuario.getId());
+            if (optSalvo.isPresent()) {
+                usuario.setSenha(optSalvo.get().getSenha());
+            }
         } else {
             // Novo usuário ou edição com nova senha: encripta
             usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));

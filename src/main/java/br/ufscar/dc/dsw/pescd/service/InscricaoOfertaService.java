@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class InscricaoOfertaService {
@@ -46,9 +47,10 @@ public class InscricaoOfertaService {
     }
 
     public void inscrever(Usuario aluno, Oferta oferta, Usuario supervisor) {
-        inscricaoRepository.findByAlunoAndOferta(aluno, oferta).ifPresent(i -> {
+        Optional<InscricaoOferta> existente = inscricaoRepository.findByAlunoAndOferta(aluno, oferta);
+        if (existente.isPresent()) {
             throw new RuntimeException("Aluno já está inscrito nesta oferta.");
-        });
+        }
         InscricaoOferta inscricao = new InscricaoOferta();
         inscricao.setAluno(aluno);
         inscricao.setOferta(oferta);

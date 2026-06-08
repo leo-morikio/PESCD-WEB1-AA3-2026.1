@@ -22,7 +22,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 // S.02 - Secretário adiciona alunos à oferta (manual ou CSV)
 @Controller
@@ -59,13 +61,36 @@ public class SecretarioAlunoController {
                                 @PathVariable Long inscricaoId,
                                 Model model) {
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
-                .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
+        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
+        if (!optInscricao.isPresent()) {
+            throw new RuntimeException("Inscrição não encontrada");
+        }
+        InscricaoOferta inscricao = optInscricao.get();
+
         model.addAttribute("oferta", oferta);
         model.addAttribute("inscricao", inscricao);
-        model.addAttribute("plano", planoRepository.findByInscricao(inscricao).orElse(null));
-        model.addAttribute("relatorio", relatorioRepository.findByInscricao(inscricao).orElse(null));
-        model.addAttribute("documentacao", documentacaoRepository.findByInscricao(inscricao).orElse(null));
+
+        Optional optPlano = planoRepository.findByInscricao(inscricao);
+        if (optPlano.isPresent()) {
+            model.addAttribute("plano", optPlano.get());
+        } else {
+            model.addAttribute("plano", null);
+        }
+
+        Optional optRelatorio = relatorioRepository.findByInscricao(inscricao);
+        if (optRelatorio.isPresent()) {
+            model.addAttribute("relatorio", optRelatorio.get());
+        } else {
+            model.addAttribute("relatorio", null);
+        }
+
+        Optional optDocumentacao = documentacaoRepository.findByInscricao(inscricao);
+        if (optDocumentacao.isPresent()) {
+            model.addAttribute("documentacao", optDocumentacao.get());
+        } else {
+            model.addAttribute("documentacao", null);
+        }
+
         model.addAttribute("logs", logStatusRepository.findByInscricao(inscricao));
         return "secretario/alunos/detalhes";
     }
@@ -74,14 +99,20 @@ public class SecretarioAlunoController {
     @GetMapping
     public String formAlunos(@PathVariable Long ofertaId, Model model) {
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
+        List<Usuario> todosUsuarios = usuarioService.listarTodos();
+        List<Usuario> alunos = new ArrayList<>();
+        List<Usuario> professores = new ArrayList<>();
+        for (Usuario u : todosUsuarios) {
+            if (u.getPerfil() == Perfil.ALUNO) {
+                alunos.add(u);
+            } else if (u.getPerfil() == Perfil.PROFESSOR) {
+                professores.add(u);
+            }
+        }
         model.addAttribute("oferta", oferta);
         model.addAttribute("inscritos", inscricaoService.listarPorOferta(oferta));
-        model.addAttribute("alunos", usuarioService.listarTodos().stream()
-                .filter(u -> u.getPerfil() == Perfil.ALUNO)
-                .toList());
-        model.addAttribute("professores", usuarioService.listarTodos().stream()
-                .filter(u -> u.getPerfil() == Perfil.PROFESSOR)
-                .toList());
+        model.addAttribute("alunos", alunos);
+        model.addAttribute("professores", professores);
         return "secretario/alunos/form";
     }
 
@@ -94,7 +125,10 @@ public class SecretarioAlunoController {
         try {
             Oferta oferta = ofertaService.buscarPorId(ofertaId);
             Usuario aluno = usuarioService.buscarPorId(alunoId);
-            Usuario supervisor = supervisorId != null ? usuarioService.buscarPorId(supervisorId) : null;
+            Usuario supervisor = null;
+            if (supervisorId != null) {
+                supervisor = usuarioService.buscarPorId(supervisorId);
+            }
             inscricaoService.inscrever(aluno, oferta, supervisor);
             ra.addFlashAttribute("sucesso", "Aluno inscrito com sucesso.");
         } catch (RuntimeException e) {
@@ -113,12 +147,14 @@ public class SecretarioAlunoController {
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8));
 
-            // Pula o cabeçalho e parseia cada linha em [ra, nome, email]
-            List<String[]> linhas = reader.lines()
-                    .skip(1)
-                    .filter(l -> !l.isBlank())
-                    .map(l -> l.split(",", 3))
-                    .toList();
+            List<String[]> linhas = new ArrayList<>();
+            reader.readLine(); // pula o cabeçalho
+            String linha;
+            while ((linha = reader.readLine()) != null) {
+                if (!linha.isBlank()) {
+                    linhas.add(linha.split(",", 3));
+                }
+            }
 
             List<String> falhas = inscricaoService.inscreverPorCsv(linhas, oferta);
 

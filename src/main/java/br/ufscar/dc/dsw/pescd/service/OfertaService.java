@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OfertaService {
@@ -24,8 +25,11 @@ public class OfertaService {
     }
 
     public Oferta buscarPorId(Long id) {
-        return ofertaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Oferta não encontrada: " + id));
+        Optional<Oferta> opt = ofertaRepository.findById(id);
+        if (!opt.isPresent()) {
+            throw new RuntimeException("Oferta não encontrada: " + id);
+        }
+        return opt.get();
     }
 
     public void salvar(Oferta oferta, Usuario criador) {
