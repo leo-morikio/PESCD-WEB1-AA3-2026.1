@@ -28,30 +28,36 @@ import java.util.Optional;
 @Service
 public class InscricaoOfertaService {
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private LogStatusService logStatusService;
+    private final LogStatusService logStatusService;
 
-    @Autowired
-    private OfertaService ofertaService;
+    private final OfertaService ofertaService;
 
-    @Autowired
-    private LogStatusRepository logStatusRepository;
+    private final LogStatusRepository logStatusRepository;
+
+    public InscricaoOfertaService(InscricaoOfertaRepository inscricaoOfertaRepository, UsuarioRepository usuarioRepository,
+                                  PasswordEncoder passwordEncoder, LogStatusService logStatusService, OfertaService ofertaService,
+                                  LogStatusRepository logStatusRepository) {
+
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.logStatusService = logStatusService;
+        this.ofertaService = ofertaService;
+        this.logStatusRepository = logStatusRepository;
+    }
 
     public List<InscricaoOferta> listarPorOferta(Oferta oferta) {
-        return inscricaoRepository.findByOferta(oferta);
+        return inscricaoOfertaRepository.findByOferta(oferta);
     }
 
     public List<InscricaoOferta> listarPorAluno(Usuario aluno) {
-        return inscricaoRepository.findByAluno(aluno);
+        return inscricaoOfertaRepository.findByAluno(aluno);
     }
 
     /**
@@ -63,7 +69,7 @@ public class InscricaoOfertaService {
     }
 
     public void inscrever(Usuario aluno, Oferta oferta, Usuario supervisor) {
-        inscricaoRepository.findByAlunoAndOferta(aluno, oferta).ifPresent(i -> {
+        inscricaoOfertaRepository.findByAlunoAndOferta(aluno, oferta).ifPresent(i -> {
             throw new RuntimeException("Aluno já está inscrito nesta oferta.");
         });
         InscricaoOferta inscricao = new InscricaoOferta();
@@ -71,7 +77,7 @@ public class InscricaoOfertaService {
         inscricao.setOferta(oferta);
         inscricao.setProfessorSupervisor(supervisor);
         inscricao.setStatus(StatusAluno.NAO_ENVIADO);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
 
         logStatusService.registrar(inscricao, null, StatusAluno.NAO_ENVIADO);
     }
@@ -114,11 +120,11 @@ public class InscricaoOfertaService {
 
     @Transactional
     public void excluir(Long inscricaoId) {
-        Optional<InscricaoOferta> opt = inscricaoRepository.findById(inscricaoId);
+        Optional<InscricaoOferta> opt = inscricaoOfertaRepository.findById(inscricaoId);
         if (opt.isPresent()) {
             InscricaoOferta inscricao = opt.get();
             logStatusRepository.deleteByInscricao(inscricao);
-            inscricaoRepository.delete(inscricao);
+            inscricaoOfertaRepository.delete(inscricao);
         }
     }
 }

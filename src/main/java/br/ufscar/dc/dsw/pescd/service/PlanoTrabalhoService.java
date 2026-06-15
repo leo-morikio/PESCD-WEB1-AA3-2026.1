@@ -13,20 +13,24 @@ import org.springframework.stereotype.Service;
 @Service
 public class PlanoTrabalhoService {
 
-    @Autowired
-    private PlanoTrabalhoRepository planoRepository;
+    private final PlanoTrabalhoRepository planoTrabalhoRepository;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private LogStatusService logStatusService;
+    private final LogStatusService logStatusService;
+
+    public PlanoTrabalhoService(PlanoTrabalhoRepository planoTrabalhoRepository, InscricaoOfertaRepository inscricaoOfertaRepository,
+                                UsuarioRepository usuarioRepository, LogStatusService logStatusService) {
+        this.planoTrabalhoRepository = planoTrabalhoRepository;
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.logStatusService = logStatusService;
+    }
 
     public void enviarPlano(Long inscricaoId, PlanoTrabalho plano, Long supervisorId) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId)
                 .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
 
         Usuario supervisor = usuarioRepository.findById(supervisorId)
@@ -34,11 +38,11 @@ public class PlanoTrabalhoService {
         inscricao.setProfessorSupervisor(supervisor);
 
         plano.setInscricao(inscricao);
-        planoRepository.save(plano);
+        planoTrabalhoRepository.save(plano);
 
         StatusAluno anterior = inscricao.getStatus();
         inscricao.setStatus(StatusAluno.PLANO_ENVIADO);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
 
         logStatusService.registrar(inscricao, anterior, StatusAluno.PLANO_ENVIADO);
     }

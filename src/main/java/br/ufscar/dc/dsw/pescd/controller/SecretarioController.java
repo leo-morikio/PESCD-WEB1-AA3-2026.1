@@ -97,24 +97,6 @@ public class SecretarioController {
         return "secretario/ofertas/detalhes";
     }
 
-    // S.04 - Iniciar encerramento
-    @PostMapping("/ofertas/{id}/iniciar-encerramento")
-    public String iniciarEncerramento(@PathVariable Long id, RedirectAttributes ra) {
-        try {
-            Oferta oferta = ofertaService.buscarPorId(id);
-            if (oferta.getStatus() != StatusOferta.ATIVA) {
-                ra.addFlashAttribute("erro", "Apenas ofertas ativas podem ser encerradas.");
-                return "redirect:/secretario/ofertas/" + id;
-            }
-            oferta.setStatus(StatusOferta.AGUARDANDO_ENCERRAMENTO_SECRETARIO);
-            ofertaService.salvar(oferta, UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository));
-            ra.addFlashAttribute("sucesso", "Oferta marcada para encerramento.");
-        } catch (RuntimeException e) {
-            ra.addFlashAttribute("erro", e.getMessage());
-        }
-        return "redirect:/secretario/ofertas/" + id;
-    }
-
     // S.04 - Confirmar encerramento
     @PostMapping("/ofertas/{id}/encerrar")
     public String encerrarOferta(@PathVariable Long id,

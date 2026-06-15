@@ -11,25 +11,30 @@ import org.springframework.stereotype.Service;
 @Service
 public class DocumentacaoEnsinoService {
 
-    @Autowired
-    private DocumentacaoEnsinoRepository documentacaoRepository;
+    private final DocumentacaoEnsinoRepository documentacaoEnsinoRepository;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private LogStatusService logStatusService;
+    private final LogStatusService logStatusService;
+
+    public DocumentacaoEnsinoService(DocumentacaoEnsinoRepository documentacaoEnsinoRepository, InscricaoOfertaRepository inscricaoOfertaRepository,
+                                     LogStatusService logStatusService) {
+
+        this.documentacaoEnsinoRepository = documentacaoEnsinoRepository;
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.logStatusService = logStatusService;
+    }
 
     public void enviarDocumentacao(Long inscricaoId, DocumentacaoEnsino documentacao) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId)
                 .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
 
         StatusAluno anterior = inscricao.getStatus();
         documentacao.setInscricao(inscricao);
-        documentacaoRepository.save(documentacao);
+        documentacaoEnsinoRepository.save(documentacao);
 
         inscricao.setStatus(StatusAluno.DOCUMENTACAO_ENVIADA);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
 
         logStatusService.registrar(inscricao, anterior, StatusAluno.DOCUMENTACAO_ENVIADA);
     }
