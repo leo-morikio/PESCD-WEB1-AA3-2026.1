@@ -48,7 +48,7 @@
                 <div class="card-header fw-bold">Importar via CSV</div>
                 <div class="card-body">
                     <p class="text-muted small">Arquivo com e-mails, um por linha (ou separados por vírgula/ponto-e-vírgula).</p>
-                    <form th:action="@{/secretario/ofertas/{id}/alunos/upload-csv(id=${oferta.id})}"
+                    <form th:action="@{/secretario/ofertas/{id}/alunos/csv(id=${oferta.id})}"
                           method="post" enctype="multipart/form-data">
                         <div class="mb-3">
                             <input type="file" name="arquivo" class="form-control"
@@ -72,6 +72,7 @@
             <th>E-mail</th>
             <th>Supervisor</th>
             <th>Status</th>
+            <th>Ações</th>
         </tr>
         </thead>
         <tbody>
@@ -80,9 +81,16 @@
             <td th:text="${i.aluno.email}"></td>
             <td th:text="${i.professorSupervisor != null ? i.professorSupervisor.nomeCompleto : '-'}"></td>
             <td th:text="${i.statusExibicao}"></td>
+            <td>
+                <form th:action="@{/secretario/ofertas/{id}/alunos/remover(id=${oferta.id})}" method="post"
+                      onsubmit="return confirm('Remover este aluno da oferta?')">
+                    <input type="hidden" name="inscricaoId" th:value="${i.id}" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>
+                </form>
+            </td>
         </tr>
         <tr th:if="${#lists.isEmpty(inscritos)}">
-            <td colspan="4" class="text-center text-muted">Nenhum aluno inscrito.</td>
+            <td colspan="5" class="text-center text-muted">Nenhum aluno inscrito.</td>
         </tr>
         </tbody>
     </table>

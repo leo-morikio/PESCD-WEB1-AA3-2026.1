@@ -1,5 +1,6 @@
 package br.ufscar.dc.dsw.pescd.controller;
 
+import br.ufscar.dc.dsw.pescd.dto.ResultadoCsvDTO;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.Oferta;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
@@ -114,21 +115,33 @@ public class SecretarioAlunoController {
     }
 
     // S.02 - Inscrição por upload (usando um csv)
-    @PostMapping("/upload-csv")
+    @PostMapping("/csv")
     public String uploadCsv(@PathVariable Long ofertaId,
                             @RequestParam("arquivo") MultipartFile arquivo,
                             RedirectAttributes ra) {
         try {
-            List<String> falhas = inscricaoOfertaService.inscreverPorCsv(arquivo, ofertaId);
-            if (falhas.isEmpty()) {
-                ra.addFlashAttribute("sucesso", "Todos os alunos foram inscritos com sucesso.");
+            ResultadoCsvDTO resultado = inscricaoOfertaService.inscreverPorCsv(arquivo, ofertaId);
+            if (resultado.getFalhas().isEmpty()) {
+                ra.addFlashAttribute("sucesso", resultado.getSucessos() + " aluno(s) foram inscritos com sucesso.");
             } else {
-                ra.addFlashAttribute("erro", falhas.size() + " aluno(s) não puderam ser inscritos:");
-                ra.addFlashAttribute("errosCsv", falhas);
+                ra.addFlashAttribute("sucesso", resultado.getSucessos() + " aluno(s) foram inscritos com sucesso.");
+                ra.addFlashAttribute("erro", resultado.getFalhas().size() + " aluno(s) não puderam ser inscritos:");
+                ra.addFlashAttribute("errosCsv",  resultado.getFalhas());
             }
         } catch (Exception e) {
             ra.addFlashAttribute("erro", "Erro ao processar arquivo: " + e.getMessage());
         }
         return "redirect:/secretario/ofertas/" + ofertaId + "/alunos";
-        }
     }
+
+    @PostMapping("/remover")
+    public String removerAluno(@PathVariable Long ofertaId, @RequestParam Long inscricaoId, RedirectAttributes ra) {
+        try{
+            inscricaoOfertaService.excluir(inscricaoId);
+        } catch(Exception e){
+            ra.addFlashAttribute("erro", "Erro ao deletar o usuário" + e.getMessage());
+        }
+        return "redirect:/secretario/ofertas/" + ofertaId +  "/alunos";
+    }
+
+}

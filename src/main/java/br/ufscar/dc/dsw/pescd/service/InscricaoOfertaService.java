@@ -1,12 +1,15 @@
 package br.ufscar.dc.dsw.pescd.service;
 
+import br.ufscar.dc.dsw.pescd.dto.ResultadoCsvDTO;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.Oferta;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.model.enums.Perfil;
 import br.ufscar.dc.dsw.pescd.model.enums.StatusAluno;
 import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
+import br.ufscar.dc.dsw.pescd.repository.LogStatusRepository;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
+import jakarta.transaction.Transactional;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class InscricaoOfertaService {
@@ -35,8 +39,12 @@ public class InscricaoOfertaService {
 
     @Autowired
     private LogStatusService logStatusService;
+
     @Autowired
     private OfertaService ofertaService;
+
+    @Autowired
+    private LogStatusRepository logStatusRepository;
 
     public List<InscricaoOferta> listarPorOferta(Oferta oferta) {
         return inscricaoRepository.findByOferta(oferta);
@@ -74,7 +82,8 @@ public class InscricaoOfertaService {
      * Retorna lista de linhas que falharam.
      */
 
-    public List<String> inscreverPorCsv(MultipartFile arquivo, Long ofertaId) throws IOException {
+    public ResultadoCsvDTO inscreverPorCsv(MultipartFile arquivo, Long ofertaId) throws IOException {
+        int sucessos = 0;
         List<String> falhas = new ArrayList<>();
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
         Reader in = new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8);
@@ -95,14 +104,21 @@ public class InscricaoOfertaService {
             }
             try {
                 inscrever(aluno, oferta, null);
+                sucessos++;
             } catch (RuntimeException ex) {
                 falhas.add(email + " (" + ex.getMessage() + ")");
             }
         }
-        return falhas;
+        return new ResultadoCsvDTO(sucessos, falhas);
     }
 
-    public void excluir(Long id) {
-        inscricaoRepository.deleteById(id);
+    @Transactional
+    public void excluir(Long inscricaoId) {
+        Optional<InscricaoOferta> opt = inscricaoRepository.findById(inscricaoId);
+        if (opt.isPresent()) {
+            InscricaoOferta inscricao = opt.get();
+            logStatusRepository.deleteByInscricao(inscricao);
+            inscricaoRepository.delete(inscricao);
+        }
     }
 }
