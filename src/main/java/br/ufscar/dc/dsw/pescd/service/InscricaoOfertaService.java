@@ -7,10 +7,17 @@ import br.ufscar.dc.dsw.pescd.model.enums.Perfil;
 import br.ufscar.dc.dsw.pescd.model.enums.StatusAluno;
 import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +35,8 @@ public class InscricaoOfertaService {
 
     @Autowired
     private LogStatusService logStatusService;
+    @Autowired
+    private OfertaService ofertaService;
 
     public List<InscricaoOferta> listarPorOferta(Oferta oferta) {
         return inscricaoRepository.findByOferta(oferta);
@@ -64,22 +73,18 @@ public class InscricaoOfertaService {
      * Se o aluno não existir no banco, cria com nomeUsuario=email, senha=RA.
      * Retorna lista de linhas que falharam.
      */
-    public List<String> inscreverPorCsv(List<String[]> linhas, Oferta oferta) {
+
+    public List<String> inscreverPorCsv(MultipartFile arquivo, Long ofertaId) throws IOException {
         List<String> falhas = new ArrayList<>();
-        for (String[] campos : linhas) {
-            if (campos.length < 3) {
-                falhas.add(campos[0] + " (linha inválida)");
-                continue;
-            }
-            String ra = campos[0].trim();
-            String nomeCompleto = campos[1].trim();
-            String email = campos[2].trim();
-
-            if (email.isBlank()) continue;
-
+        Oferta oferta = ofertaService.buscarPorId(ofertaId);
+        Reader in = new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8);
+        Iterable<CSVRecord> records = CSVFormat.RFC4180.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
+        for (CSVRecord record : records) {
+            String ra = record.get("RA");
+            String nomeCompleto = record.get("NOME_COMPLETO");
+            String email = record.get("EMAIL");
             Usuario aluno = usuarioRepository.findByEmail(email);
             if (aluno == null) {
-                // Cria o aluno: nomeUsuario=email, senha=RA
                 aluno = new Usuario();
                 aluno.setNomeCompleto(nomeCompleto);
                 aluno.setEmail(email);
@@ -88,9 +93,8 @@ public class InscricaoOfertaService {
                 aluno.setPerfil(Perfil.ALUNO);
                 usuarioRepository.save(aluno);
             }
-
             try {
-                inscrever(aluno, oferta);
+                inscrever(aluno, oferta, null);
             } catch (RuntimeException ex) {
                 falhas.add(email + " (" + ex.getMessage() + ")");
             }

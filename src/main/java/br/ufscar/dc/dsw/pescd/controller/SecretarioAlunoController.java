@@ -12,16 +12,20 @@ import br.ufscar.dc.dsw.pescd.repository.RelatorioFinalRepository;
 import br.ufscar.dc.dsw.pescd.service.InscricaoOfertaService;
 import br.ufscar.dc.dsw.pescd.service.OfertaService;
 import br.ufscar.dc.dsw.pescd.service.UsuarioService;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 
 // S.02 - Secretário adiciona alunos à oferta (manual ou CSV)
 @Controller
@@ -109,34 +113,22 @@ public class SecretarioAlunoController {
         return "redirect:/secretario/ofertas/" + ofertaId + "/alunos";
     }
 
-    // S.02 - Upload CSV formato RA,NOME COMPLETO,EMAIL
+    // S.02 - Inscrição por upload (usando um csv)
     @PostMapping("/upload-csv")
     public String uploadCsv(@PathVariable Long ofertaId,
-                             @RequestParam("arquivo") MultipartFile arquivo,
-                             RedirectAttributes ra) {
+                            @RequestParam("arquivo") MultipartFile arquivo,
+                            RedirectAttributes ra) {
         try {
-            Oferta oferta = ofertaService.buscarPorId(ofertaId);
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8));
-
-            // Pula o cabeçalho e parseia cada linha em [ra, nome, email]
-            List<String[]> linhas = reader.lines()
-                    .skip(1)
-                    .filter(l -> !l.isBlank())
-                    .map(l -> l.split(",", 3))
-                    .toList();
-
-            List<String> falhas = inscricaoOfertaService.inscreverPorCsv(linhas, oferta);
-
+            List<String> falhas = inscricaoOfertaService.inscreverPorCsv(arquivo, ofertaId);
             if (falhas.isEmpty()) {
-                ra.addFlashAttribute("sucesso", linhas.size() + " aluno(s) inscritos com sucesso.");
+                ra.addFlashAttribute("sucesso", "Todos os alunos foram inscritos com sucesso.");
             } else {
-                ra.addFlashAttribute("sucesso", (linhas.size() - falhas.size()) + " inscrito(s).");
+                ra.addFlashAttribute("erro", falhas.size() + " aluno(s) não puderam ser inscritos:");
                 ra.addFlashAttribute("errosCsv", falhas);
             }
         } catch (Exception e) {
             ra.addFlashAttribute("erro", "Erro ao processar arquivo: " + e.getMessage());
         }
         return "redirect:/secretario/ofertas/" + ofertaId + "/alunos";
+        }
     }
-}
