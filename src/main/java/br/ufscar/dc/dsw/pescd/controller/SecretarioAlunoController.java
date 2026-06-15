@@ -12,7 +12,6 @@ import br.ufscar.dc.dsw.pescd.repository.RelatorioFinalRepository;
 import br.ufscar.dc.dsw.pescd.service.InscricaoOfertaService;
 import br.ufscar.dc.dsw.pescd.service.OfertaService;
 import br.ufscar.dc.dsw.pescd.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -29,29 +28,36 @@ import java.util.List;
 @RequestMapping("/secretario/ofertas/{ofertaId}/alunos")
 public class SecretarioAlunoController {
 
-    @Autowired
-    private OfertaService ofertaService;
+    private final OfertaService ofertaService;
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
 
-    @Autowired
-    private InscricaoOfertaService inscricaoService;
+    private final InscricaoOfertaService inscricaoOfertaService;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private PlanoTrabalhoRepository planoRepository;
+    private final PlanoTrabalhoRepository planoTrabalhoRepository;
 
-    @Autowired
-    private RelatorioFinalRepository relatorioRepository;
+    private final RelatorioFinalRepository relatorioFinalRepository;
 
-    @Autowired
-    private DocumentacaoEnsinoRepository documentacaoRepository;
+    private final DocumentacaoEnsinoRepository documentacaoEnsinoRepository;
 
-    @Autowired
-    private LogStatusRepository logStatusRepository;
+    private final LogStatusRepository logStatusRepository;
+
+    public SecretarioAlunoController(OfertaService ofertaService, UsuarioService usuarioService, InscricaoOfertaService inscricaoOfertaService,
+                                     InscricaoOfertaRepository inscricaoOfertaRepository, PlanoTrabalhoRepository planoTrabalhoRepository,
+                                     RelatorioFinalRepository relatorioFinalRepository, DocumentacaoEnsinoRepository documentacaoEnsinoRepository,
+                                     LogStatusRepository logStatusRepository) {
+
+        this.ofertaService = ofertaService;
+        this.usuarioService = usuarioService;
+        this.inscricaoOfertaService = inscricaoOfertaService;
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.planoTrabalhoRepository = planoTrabalhoRepository;
+        this.relatorioFinalRepository = relatorioFinalRepository;
+        this.documentacaoEnsinoRepository = documentacaoEnsinoRepository;
+        this.logStatusRepository = logStatusRepository;
+    }
 
     // S.03 RN-3 - Detalhes do aluno na inscrição (info + logs)
     @GetMapping("/{inscricaoId}")
@@ -59,13 +65,13 @@ public class SecretarioAlunoController {
                                 @PathVariable Long inscricaoId,
                                 Model model) {
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId)
                 .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
         model.addAttribute("oferta", oferta);
         model.addAttribute("inscricao", inscricao);
-        model.addAttribute("plano", planoRepository.findByInscricao(inscricao).orElse(null));
-        model.addAttribute("relatorio", relatorioRepository.findByInscricao(inscricao).orElse(null));
-        model.addAttribute("documentacao", documentacaoRepository.findByInscricao(inscricao).orElse(null));
+        model.addAttribute("plano", planoTrabalhoRepository.findByInscricao(inscricao).orElse(null));
+        model.addAttribute("relatorio", relatorioFinalRepository.findByInscricao(inscricao).orElse(null));
+        model.addAttribute("documentacao", documentacaoEnsinoRepository.findByInscricao(inscricao).orElse(null));
         model.addAttribute("logs", logStatusRepository.findByInscricao(inscricao));
         return "secretario/alunos/detalhes";
     }
@@ -75,7 +81,7 @@ public class SecretarioAlunoController {
     public String formAlunos(@PathVariable Long ofertaId, Model model) {
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
         model.addAttribute("oferta", oferta);
-        model.addAttribute("inscritos", inscricaoService.listarPorOferta(oferta));
+        model.addAttribute("inscritos", inscricaoOfertaService.listarPorOferta(oferta));
         model.addAttribute("alunos", usuarioService.listarTodos().stream()
                 .filter(u -> u.getPerfil() == Perfil.ALUNO)
                 .toList());
@@ -95,7 +101,7 @@ public class SecretarioAlunoController {
             Oferta oferta = ofertaService.buscarPorId(ofertaId);
             Usuario aluno = usuarioService.buscarPorId(alunoId);
             Usuario supervisor = supervisorId != null ? usuarioService.buscarPorId(supervisorId) : null;
-            inscricaoService.inscrever(aluno, oferta, supervisor);
+            inscricaoOfertaService.inscrever(aluno, oferta, supervisor);
             ra.addFlashAttribute("sucesso", "Aluno inscrito com sucesso.");
         } catch (RuntimeException e) {
             ra.addFlashAttribute("erro", e.getMessage());
@@ -120,7 +126,7 @@ public class SecretarioAlunoController {
                     .map(l -> l.split(",", 3))
                     .toList();
 
-            List<String> falhas = inscricaoService.inscreverPorCsv(linhas, oferta);
+            List<String> falhas = inscricaoOfertaService.inscreverPorCsv(linhas, oferta);
 
             if (falhas.isEmpty()) {
                 ra.addFlashAttribute("sucesso", linhas.size() + " aluno(s) inscritos com sucesso.");

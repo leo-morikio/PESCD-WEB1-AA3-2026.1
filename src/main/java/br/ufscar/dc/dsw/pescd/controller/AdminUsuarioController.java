@@ -16,11 +16,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin/usuarios")
 public class AdminUsuarioController {
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    public AdminUsuarioController(UsuarioService usuarioService, UsuarioRepository usuarioRepository) {
+        this.usuarioService = usuarioService;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     // AD.01 - Lista todos os usuários
     @GetMapping

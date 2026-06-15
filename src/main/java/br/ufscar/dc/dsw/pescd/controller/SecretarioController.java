@@ -23,17 +23,22 @@ import java.util.List;
 @RequestMapping("/secretario")
 public class SecretarioController {
 
-    @Autowired
-    private OfertaService ofertaService;
+    private final OfertaService ofertaService;
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
 
-    @Autowired
-    private InscricaoOfertaService inscricaoService;
+    private final InscricaoOfertaService inscricaoService;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+
+
+    //Construtor para instanciar as services - sem autowired
+    public SecretarioController(OfertaService ofertaService, UsuarioService usuarioService, InscricaoOfertaService inscricaoService, UsuarioRepository usuarioRepository) {
+        this.ofertaService = ofertaService;
+        this.usuarioService = usuarioService;
+        this.inscricaoService = inscricaoService;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     // S.03 - Lista ofertas (painel do secretário)
     @GetMapping("/ofertas")
