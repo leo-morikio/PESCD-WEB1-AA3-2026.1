@@ -79,20 +79,6 @@
     <a th:href="@{/secretario/ofertas/{id}/alunos(id=${oferta.id})}"
        class="btn btn-outline-primary mb-4">Gerenciar Alunos</a>
 
-    <!-- S.04 - Iniciar encerramento -->
-    <div th:if="${oferta.status.name() == 'ATIVA'}" class="card border-warning mb-4">
-        <div class="card-header text-warning fw-bold">Encerrar Oferta</div>
-        <div class="card-body">
-            <p class="text-muted">Ao iniciar o encerramento, a oferta entrará em estado de aguardo para confirmação.</p>
-            <form th:action="@{/secretario/ofertas/{id}/iniciar-encerramento(id=${oferta.id})}" method="post">
-                <button type="submit" class="btn btn-warning"
-                        onclick="return confirm('Iniciar processo de encerramento desta oferta?')">
-                    Iniciar Encerramento
-                </button>
-            </form>
-        </div>
-    </div>
-
     <!-- S.04 - Confirmar encerramento -->
     <div th:if="${oferta.status.name() == 'AGUARDANDO_ENCERRAMENTO_SECRETARIO'}" class="card border-danger mb-4">
         <div class="card-header text-danger fw-bold">Confirmar Encerramento</div>
