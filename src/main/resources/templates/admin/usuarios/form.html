@@ -27,8 +27,8 @@
             <input type="text" th:field="*{usuario.nomeUsuario}" class="form-control" required />
         </div>
         <div class="mb-3">
-            <label class="form-label">Senha *</label>
-            <input type="password" th:field="*{usuario.senha}" class="form-control" required />
+            <label class="form-label" th:text="${usuario.id == null ? 'Senha *' : 'Senha (deixe vazio para manter a atual)'}">Senha</label>
+            <input type="password" th:field="*{usuario.senha}" class="form-control" th:required="${usuario.id == null}" />
         </div>
         <div class="mb-3">
             <label class="form-label">Perfil *</label>

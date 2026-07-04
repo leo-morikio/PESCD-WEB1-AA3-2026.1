@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface LogStatusRepository extends JpaRepository<LogStatus, Long> {
     List<LogStatus> findByInscricao(InscricaoOferta inscricao);
+    void deleteByInscricao(InscricaoOferta inscricao);
 }

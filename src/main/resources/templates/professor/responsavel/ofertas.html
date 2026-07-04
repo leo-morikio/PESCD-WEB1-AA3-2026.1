@@ -19,7 +19,9 @@
                     <a class="nav-link" th:href="@{/professor/responsavel/ofertas}">Responsável</a>
                 </li>
                 <li class="nav-item">
-                    <a class="btn btn-outline-light ms-2" th:href="@{/logout}">Sair</a>
+                    <form th:action="@{/logout}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-outline-light ms-2">Sair</button>
+                    </form>
                 </li>
             </ul>
         </div>
@@ -53,7 +55,7 @@
                 <tbody>
                 <tr th:each="inscricao : ${inscricoesPorOferta[oferta.id]}">
                     <td th:text="${inscricao.aluno.nomeCompleto}"></td>
-                    <td th:text="${inscricao.status}"></td>
+                    <td th:text="${inscricao.statusExibicao}"></td>
                     <td>
                         <a th:if="${inscricao.status.name() == 'RELATORIO_APROVADO_SUPERVISOR'}"
                            th:href="@{/professor/responsavel/concluir-relatorio/{id}(id=${inscricao.id})}"

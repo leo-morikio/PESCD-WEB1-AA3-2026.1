@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/aluno/documentacao")
 public class DocumentacaoEnsinoController {
 
-    @Autowired
-    private DocumentacaoEnsinoService documentacaoService;
+    private final DocumentacaoEnsinoService documentacaoService;
+
+    DocumentacaoEnsinoController(DocumentacaoEnsinoService documentacaoService){
+        this.documentacaoService = documentacaoService;
+    }
 
     @GetMapping("/novo/{inscricaoId}")
     public String mostrarFormulario(@PathVariable Long inscricaoId, Model model) {

@@ -3,6 +3,7 @@ package br.ufscar.dc.dsw.pescd.service;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,8 +11,13 @@ import java.util.List;
 @Service
 public class UsuarioService {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
@@ -28,6 +34,21 @@ public class UsuarioService {
         if (existente != null && !existente.getId().equals(usuario.getId())) {
             throw new RuntimeException("E-mail já cadastrado: " + usuario.getEmail());
         }
+
+        Usuario existenteNome = usuarioRepository.findByNomeUsuario(usuario.getNomeUsuario());
+        if (existenteNome != null && !existenteNome.getId().equals(usuario.getId())) {
+            throw new RuntimeException("Nome de usuário já cadastrado: " + usuario.getNomeUsuario());
+        }
+
+        if (usuario.getId() != null && (usuario.getSenha() == null || usuario.getSenha().isBlank())) {
+            // Edição sem nova senha: mantém a senha atual do banco
+            Usuario salvo = usuarioRepository.findById(usuario.getId()).get();
+            usuario.setSenha(salvo.getSenha());
+        } else {
+            // Novo usuário ou edição com nova senha: encripta
+            usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+        }
+
         usuarioRepository.save(usuario);
     }
 

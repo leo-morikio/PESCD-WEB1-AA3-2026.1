@@ -17,26 +17,33 @@ import java.util.List;
 @RequestMapping("/professor/responsavel")
 public class ProfessorResponsavelController {
 
-    @Autowired
-    private OfertaRepository ofertaRepository;
+    private final OfertaRepository ofertaRepository;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private PlanoTrabalhoRepository planoRepository;
+    private final PlanoTrabalhoRepository planoTrabalhoRepository;
 
-    @Autowired
-    private RelatorioFinalRepository relatorioRepository;
+    private final RelatorioFinalRepository relatorioFinalRepository;
 
-    @Autowired
-    private DocumentacaoEnsinoRepository documentacaoRepository;
+    private final DocumentacaoEnsinoRepository documentacaoEnsinoRepository;
 
-    @Autowired
-    private LogStatusRepository logStatusRepository;
+    private final LogStatusRepository logStatusRepository;
+
+    public ProfessorResponsavelController(OfertaRepository ofertaRepository, InscricaoOfertaRepository inscricaoOfertaRepository,
+                                          UsuarioRepository usuarioRepository, PlanoTrabalhoRepository planoTrabalhoRepository,
+                                          RelatorioFinalRepository relatorioFinalRepository, DocumentacaoEnsinoRepository documentacaoEnsinoRepository,
+                                          LogStatusRepository logStatusRepository) {
+
+        this.ofertaRepository = ofertaRepository;
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.planoTrabalhoRepository = planoTrabalhoRepository;
+        this.relatorioFinalRepository = relatorioFinalRepository;
+        this.documentacaoEnsinoRepository = documentacaoEnsinoRepository;
+        this.logStatusRepository = logStatusRepository;
+    }
 
     // PR.04 — acompanha ofertas
     @GetMapping("/ofertas")
@@ -47,7 +54,7 @@ public class ProfessorResponsavelController {
         model.addAttribute("inscricoesPorOferta",
                 ofertas.stream().collect(java.util.stream.Collectors.toMap(
                         Oferta::getId,
-                        o -> inscricaoRepository.findByOferta(o)
+                        o -> inscricaoOfertaRepository.findByOferta(o)
                 )));
         return "professor/responsavel/ofertas";
     }
@@ -55,9 +62,9 @@ public class ProfessorResponsavelController {
     // PR.01 — exibe formulário de conclusão do relatório
     @GetMapping("/concluir-relatorio/{inscricaoId}")
     public String formConcluirRelatorio(@PathVariable Long inscricaoId, Model model) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
-        PlanoTrabalho plano = planoRepository.findByInscricao(inscricao).orElse(null);
-        RelatorioFinal relatorio = relatorioRepository.findByInscricao(inscricao).orElse(null);
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId).orElseThrow();
+        PlanoTrabalho plano = planoTrabalhoRepository.findByInscricao(inscricao).orElse(null);
+        RelatorioFinal relatorio = relatorioFinalRepository.findByInscricao(inscricao).orElse(null);
         List<LogStatus> logs = logStatusRepository.findByInscricao(inscricao);
         model.addAttribute("inscricao", inscricao);
         model.addAttribute("plano", plano);
@@ -73,11 +80,11 @@ public class ProfessorResponsavelController {
                                     @RequestParam Integer frequencia,
                                     @RequestParam String nota) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId).orElseThrow();
 
         String statusAnterior = inscricao.getStatus().name();
         inscricao.setStatus(StatusAluno.CONCLUIDO_RESPONSAVEL);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
 
         logStatusRepository.save(new LogStatus(inscricao, statusAnterior,
                 StatusAluno.CONCLUIDO_RESPONSAVEL.name(), professor));
@@ -88,8 +95,8 @@ public class ProfessorResponsavelController {
     // PR.02 — exibe formulário de análise de documentação
     @GetMapping("/analisar-documentacao/{inscricaoId}")
     public String formAnalisarDocumentacao(@PathVariable Long inscricaoId, Model model) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
-        DocumentacaoEnsino documentacao = documentacaoRepository.findByInscricao(inscricao).orElse(null);
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId).orElseThrow();
+        DocumentacaoEnsino documentacao = documentacaoEnsinoRepository.findByInscricao(inscricao).orElse(null);
         List<LogStatus> logs = logStatusRepository.findByInscricao(inscricao);
         model.addAttribute("inscricao", inscricao);
         model.addAttribute("documentacao", documentacao);
@@ -104,11 +111,11 @@ public class ProfessorResponsavelController {
                                        @RequestParam Integer indicadorFrequencia,
                                        @RequestParam String nota) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId).orElseThrow();
 
         String statusAnterior = inscricao.getStatus().name();
         inscricao.setStatus(StatusAluno.CONCLUIDO_RESPONSAVEL);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
 
         logStatusRepository.save(new LogStatus(inscricao, statusAnterior,
                 StatusAluno.CONCLUIDO_RESPONSAVEL.name(), professor));
@@ -123,7 +130,7 @@ public class ProfessorResponsavelController {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
         Oferta oferta = ofertaRepository.findById(ofertaId).orElseThrow();
 
-        List<InscricaoOferta> inscricoes = inscricaoRepository.findByOferta(oferta);
+        List<InscricaoOferta> inscricoes = inscricaoOfertaRepository.findByOferta(oferta);
         boolean todosConcluidos = inscricoes.stream()
                 .allMatch(i -> i.getStatus() == StatusAluno.CONCLUIDO_RESPONSAVEL);
 

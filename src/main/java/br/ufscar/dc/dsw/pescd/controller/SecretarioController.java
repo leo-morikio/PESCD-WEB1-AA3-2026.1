@@ -6,6 +6,7 @@ import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.model.enums.Perfil;
 import br.ufscar.dc.dsw.pescd.model.enums.StatusOferta;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
+import br.ufscar.dc.dsw.pescd.service.InscricaoOfertaService;
 import br.ufscar.dc.dsw.pescd.service.OfertaService;
 import br.ufscar.dc.dsw.pescd.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +23,22 @@ import java.util.List;
 @RequestMapping("/secretario")
 public class SecretarioController {
 
-    @Autowired
-    private OfertaService ofertaService;
+    private final OfertaService ofertaService;
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final InscricaoOfertaService inscricaoService;
+
+    private final UsuarioRepository usuarioRepository;
+
+
+    //Construtor para instanciar as services - sem autowired
+    public SecretarioController(OfertaService ofertaService, UsuarioService usuarioService, InscricaoOfertaService inscricaoService, UsuarioRepository usuarioRepository) {
+        this.ofertaService = ofertaService;
+        this.usuarioService = usuarioService;
+        this.inscricaoService = inscricaoService;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     // S.03 - Lista ofertas (painel do secretário)
     @GetMapping("/ofertas")
@@ -84,25 +93,8 @@ public class SecretarioController {
         Oferta oferta = ofertaService.buscarPorId(id);
         model.addAttribute("oferta", oferta);
         model.addAttribute("ofertaService", ofertaService);
+        model.addAttribute("inscritos", inscricaoService.listarPorOferta(oferta));
         return "secretario/ofertas/detalhes";
-    }
-
-    // S.04 - Iniciar encerramento
-    @PostMapping("/ofertas/{id}/iniciar-encerramento")
-    public String iniciarEncerramento(@PathVariable Long id, RedirectAttributes ra) {
-        try {
-            Oferta oferta = ofertaService.buscarPorId(id);
-            if (oferta.getStatus() != StatusOferta.ATIVA) {
-                ra.addFlashAttribute("erro", "Apenas ofertas ativas podem ser encerradas.");
-                return "redirect:/secretario/ofertas/" + id;
-            }
-            oferta.setStatus(StatusOferta.AGUARDANDO_ENCERRAMENTO_SECRETARIO);
-            ofertaService.salvar(oferta, UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository));
-            ra.addFlashAttribute("sucesso", "Oferta marcada para encerramento.");
-        } catch (RuntimeException e) {
-            ra.addFlashAttribute("erro", e.getMessage());
-        }
-        return "redirect:/secretario/ofertas/" + id;
     }
 
     // S.04 - Confirmar encerramento

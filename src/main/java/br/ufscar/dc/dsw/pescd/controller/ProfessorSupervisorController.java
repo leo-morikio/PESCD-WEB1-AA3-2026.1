@@ -23,20 +23,25 @@ import java.util.List;
 @RequestMapping("/professor/supervisor")
 public class ProfessorSupervisorController {
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private PlanoTrabalhoRepository planoRepository;
+    private final PlanoTrabalhoRepository planoTrabalhoRepository;
 
-    @Autowired
-    private RelatorioFinalRepository relatorioRepository;
+    private final RelatorioFinalRepository relatorioFinalRepository;
 
-    @Autowired
-    private LogStatusRepository logStatusRepository;
+    private final LogStatusRepository logStatusRepository;
+
+    public ProfessorSupervisorController(InscricaoOfertaRepository inscricaoRepository, UsuarioRepository usuarioRepository,
+                                         PlanoTrabalhoRepository planoTrabalhoRepository, RelatorioFinalRepository relatorioFinalRepository,
+                                         LogStatusRepository logStatusRepository) {
+        this.inscricaoRepository = inscricaoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.planoTrabalhoRepository = planoTrabalhoRepository;
+        this.relatorioFinalRepository = relatorioFinalRepository;
+        this.logStatusRepository = logStatusRepository;
+    }
 
     // PS.01
     @GetMapping("/ofertas")
@@ -51,7 +56,7 @@ public class ProfessorSupervisorController {
     @GetMapping("/aprovar-plano/{inscricaoId}")
     public String formAprovarPlano(@PathVariable Long inscricaoId, Model model) {
         InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
-        PlanoTrabalho plano = planoRepository.findByInscricao(inscricao).orElse(null);
+        PlanoTrabalho plano = planoTrabalhoRepository.findByInscricao(inscricao).orElse(null);
         model.addAttribute("inscricao", inscricao);
         model.addAttribute("plano", plano);
         return "professor/supervisor/aprovar-plano";
@@ -78,8 +83,8 @@ public class ProfessorSupervisorController {
     @GetMapping("/aprovar-relatorio/{inscricaoId}")
     public String formAprovarRelatorio(@PathVariable Long inscricaoId, Model model) {
         InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
-        PlanoTrabalho plano = planoRepository.findByInscricao(inscricao).orElse(null);
-        RelatorioFinal relatorio = relatorioRepository.findByInscricao(inscricao).orElse(null);
+        PlanoTrabalho plano = planoTrabalhoRepository.findByInscricao(inscricao).orElse(null);
+        RelatorioFinal relatorio = relatorioFinalRepository.findByInscricao(inscricao).orElse(null);
         model.addAttribute("inscricao", inscricao);
         model.addAttribute("plano", plano);
         model.addAttribute("relatorio", relatorio);

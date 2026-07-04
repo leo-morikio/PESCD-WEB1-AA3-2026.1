@@ -19,7 +19,9 @@
                     <a class="nav-link" th:href="@{/professor/responsavel/ofertas}">Responsável</a>
                 </li>
                 <li class="nav-item">
-                    <a class="btn btn-outline-light ms-2" th:href="@{/logout}">Sair</a>
+                    <form th:action="@{/logout}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-outline-light ms-2">Sair</button>
+                    </form>
                 </li>
             </ul>
         </div>

@@ -13,11 +13,14 @@ import java.util.List;
 @Service
 public class OfertaService {
 
-    @Autowired
-    private OfertaRepository ofertaRepository;
+    private final OfertaRepository ofertaRepository;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoRepository;
+
+    public OfertaService(OfertaRepository ofertaRepository, InscricaoOfertaRepository inscricaoRepository) {
+        this.ofertaRepository = ofertaRepository;
+        this.inscricaoRepository = inscricaoRepository;
+    }
 
     public List<Oferta> listarTodasOrdenadas() {
         return ofertaRepository.findAllByOrderBySemestreDesc();

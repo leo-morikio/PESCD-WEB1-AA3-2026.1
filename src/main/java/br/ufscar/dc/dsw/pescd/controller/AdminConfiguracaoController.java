@@ -16,8 +16,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin/configuracao")
 public class AdminConfiguracaoController {
 
-    @Autowired
-    private ConfiguracaoSistemaRepository configuracaoRepository;
+    private final ConfiguracaoSistemaRepository configuracaoRepository;
+
+    public AdminConfiguracaoController(ConfiguracaoSistemaRepository configuracaoRepository) {
+        this.configuracaoRepository = configuracaoRepository;
+    }
 
     private ConfiguracaoSistema getOuCriar() {
         return configuracaoRepository.findById(1L).orElseGet(() -> {

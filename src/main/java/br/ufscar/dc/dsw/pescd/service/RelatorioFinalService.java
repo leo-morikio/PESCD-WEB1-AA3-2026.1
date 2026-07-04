@@ -11,14 +11,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class RelatorioFinalService {
 
-    @Autowired
-    private RelatorioFinalRepository relatorioRepository;
+    private final RelatorioFinalRepository relatorioFinalRepository;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
+
+    private final LogStatusService logStatusService;
+
+    public RelatorioFinalService(RelatorioFinalRepository relatorioFinalRepository, InscricaoOfertaRepository inscricaoOfertaRepository, LogStatusService logStatusService) {
+        this.relatorioFinalRepository = relatorioFinalRepository;
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.logStatusService = logStatusService;
+    }
 
     public void enviarRelatorio(Long inscricaoId, RelatorioFinal relatorio) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId)
                 .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
 
         if (inscricao.getStatus() != StatusAluno.PLANO_APROVADO) {
@@ -26,9 +32,12 @@ public class RelatorioFinalService {
         }
 
         relatorio.setInscricao(inscricao);
-        relatorioRepository.save(relatorio);
+        relatorioFinalRepository.save(relatorio);
 
+        StatusAluno anterior = inscricao.getStatus();
         inscricao.setStatus(StatusAluno.RELATORIO_ENVIADO);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
+
+        logStatusService.registrar(inscricao, anterior, StatusAluno.RELATORIO_ENVIADO);
     }
 }

@@ -15,18 +15,21 @@ import java.util.List;
 @Controller
 public class OfertaAlunoController {
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    public OfertaAlunoController(InscricaoOfertaRepository inscricaoOfertaRepository, UsuarioRepository usuarioRepository) {
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     @GetMapping("/aluno/ofertas")
     public String listarOfertas(Model model) {
 
         Usuario alunoLogado = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
 
-        List<InscricaoOferta> inscricoes = inscricaoRepository.findByAluno(alunoLogado);
+        List<InscricaoOferta> inscricoes = inscricaoOfertaRepository.findByAluno(alunoLogado);
         model.addAttribute("inscricoes", inscricoes);
 
         return "aluno/lista-ofertas";
