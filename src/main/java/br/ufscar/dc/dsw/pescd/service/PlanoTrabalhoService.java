@@ -10,43 +10,39 @@ import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class PlanoTrabalhoService {
 
-    @Autowired
-    private PlanoTrabalhoRepository planoRepository;
+    private final PlanoTrabalhoRepository planoTrabalhoRepository;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private LogStatusService logStatusService;
+    private final LogStatusService logStatusService;
+
+    public PlanoTrabalhoService(PlanoTrabalhoRepository planoTrabalhoRepository, InscricaoOfertaRepository inscricaoOfertaRepository,
+                                UsuarioRepository usuarioRepository, LogStatusService logStatusService) {
+        this.planoTrabalhoRepository = planoTrabalhoRepository;
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.logStatusService = logStatusService;
+    }
 
     public void enviarPlano(Long inscricaoId, PlanoTrabalho plano, Long supervisorId) {
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId)
+                .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
 
-        Optional<Usuario> optSupervisor = usuarioRepository.findById(supervisorId);
-        if (!optSupervisor.isPresent()) {
-            throw new RuntimeException("Professor supervisor não encontrado");
-        }
-        Usuario supervisor = optSupervisor.get();
+        Usuario supervisor = usuarioRepository.findById(supervisorId)
+                .orElseThrow(() -> new RuntimeException("Professor supervisor não encontrado"));
         inscricao.setProfessorSupervisor(supervisor);
 
         plano.setInscricao(inscricao);
-        planoRepository.save(plano);
+        planoTrabalhoRepository.save(plano);
 
         StatusAluno anterior = inscricao.getStatus();
         inscricao.setStatus(StatusAluno.PLANO_ENVIADO);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
 
         logStatusService.registrar(inscricao, anterior, StatusAluno.PLANO_ENVIADO);
     }

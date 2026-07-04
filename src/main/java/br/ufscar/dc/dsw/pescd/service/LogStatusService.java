@@ -13,11 +13,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class LogStatusService {
 
-    @Autowired
-    private LogStatusRepository logStatusRepository;
+    private final LogStatusRepository logStatusRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    public LogStatusService(LogStatusRepository logStatusRepository, UsuarioRepository usuarioRepository) {
+        this.logStatusRepository = logStatusRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     /**
      * S.03 RN-3 - Registra mudança de status de um aluno na inscrição.

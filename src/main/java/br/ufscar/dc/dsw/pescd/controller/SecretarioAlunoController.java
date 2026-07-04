@@ -1,5 +1,6 @@
 package br.ufscar.dc.dsw.pescd.controller;
 
+import br.ufscar.dc.dsw.pescd.dto.ResultadoCsvDTO;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.Oferta;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
@@ -12,48 +13,56 @@ import br.ufscar.dc.dsw.pescd.repository.RelatorioFinalRepository;
 import br.ufscar.dc.dsw.pescd.service.InscricaoOfertaService;
 import br.ufscar.dc.dsw.pescd.service.OfertaService;
 import br.ufscar.dc.dsw.pescd.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 
 // S.02 - Secretário adiciona alunos à oferta (manual ou CSV)
 @Controller
 @RequestMapping("/secretario/ofertas/{ofertaId}/alunos")
 public class SecretarioAlunoController {
 
-    @Autowired
-    private OfertaService ofertaService;
+    private final OfertaService ofertaService;
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
 
-    @Autowired
-    private InscricaoOfertaService inscricaoService;
+    private final InscricaoOfertaService inscricaoOfertaService;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private PlanoTrabalhoRepository planoRepository;
+    private final PlanoTrabalhoRepository planoTrabalhoRepository;
 
-    @Autowired
-    private RelatorioFinalRepository relatorioRepository;
+    private final RelatorioFinalRepository relatorioFinalRepository;
 
-    @Autowired
-    private DocumentacaoEnsinoRepository documentacaoRepository;
+    private final DocumentacaoEnsinoRepository documentacaoEnsinoRepository;
 
-    @Autowired
-    private LogStatusRepository logStatusRepository;
+    private final LogStatusRepository logStatusRepository;
+
+    public SecretarioAlunoController(OfertaService ofertaService, UsuarioService usuarioService, InscricaoOfertaService inscricaoOfertaService,
+                                     InscricaoOfertaRepository inscricaoOfertaRepository, PlanoTrabalhoRepository planoTrabalhoRepository,
+                                     RelatorioFinalRepository relatorioFinalRepository, DocumentacaoEnsinoRepository documentacaoEnsinoRepository,
+                                     LogStatusRepository logStatusRepository) {
+
+        this.ofertaService = ofertaService;
+        this.usuarioService = usuarioService;
+        this.inscricaoOfertaService = inscricaoOfertaService;
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.planoTrabalhoRepository = planoTrabalhoRepository;
+        this.relatorioFinalRepository = relatorioFinalRepository;
+        this.documentacaoEnsinoRepository = documentacaoEnsinoRepository;
+        this.logStatusRepository = logStatusRepository;
+    }
 
     // S.03 RN-3 - Detalhes do aluno na inscrição (info + logs)
     @GetMapping("/{inscricaoId}")
@@ -61,36 +70,13 @@ public class SecretarioAlunoController {
                                 @PathVariable Long inscricaoId,
                                 Model model) {
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
-
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId)
+                .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
         model.addAttribute("oferta", oferta);
         model.addAttribute("inscricao", inscricao);
-
-        Optional optPlano = planoRepository.findByInscricao(inscricao);
-        if (optPlano.isPresent()) {
-            model.addAttribute("plano", optPlano.get());
-        } else {
-            model.addAttribute("plano", null);
-        }
-
-        Optional optRelatorio = relatorioRepository.findByInscricao(inscricao);
-        if (optRelatorio.isPresent()) {
-            model.addAttribute("relatorio", optRelatorio.get());
-        } else {
-            model.addAttribute("relatorio", null);
-        }
-
-        Optional optDocumentacao = documentacaoRepository.findByInscricao(inscricao);
-        if (optDocumentacao.isPresent()) {
-            model.addAttribute("documentacao", optDocumentacao.get());
-        } else {
-            model.addAttribute("documentacao", null);
-        }
-
+        model.addAttribute("plano", planoTrabalhoRepository.findByInscricao(inscricao).orElse(null));
+        model.addAttribute("relatorio", relatorioFinalRepository.findByInscricao(inscricao).orElse(null));
+        model.addAttribute("documentacao", documentacaoEnsinoRepository.findByInscricao(inscricao).orElse(null));
         model.addAttribute("logs", logStatusRepository.findByInscricao(inscricao));
         return "secretario/alunos/detalhes";
     }
@@ -99,20 +85,14 @@ public class SecretarioAlunoController {
     @GetMapping
     public String formAlunos(@PathVariable Long ofertaId, Model model) {
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
-        List<Usuario> todosUsuarios = usuarioService.listarTodos();
-        List<Usuario> alunos = new ArrayList<>();
-        List<Usuario> professores = new ArrayList<>();
-        for (Usuario u : todosUsuarios) {
-            if (u.getPerfil() == Perfil.ALUNO) {
-                alunos.add(u);
-            } else if (u.getPerfil() == Perfil.PROFESSOR) {
-                professores.add(u);
-            }
-        }
         model.addAttribute("oferta", oferta);
-        model.addAttribute("inscritos", inscricaoService.listarPorOferta(oferta));
-        model.addAttribute("alunos", alunos);
-        model.addAttribute("professores", professores);
+        model.addAttribute("inscritos", inscricaoOfertaService.listarPorOferta(oferta));
+        model.addAttribute("alunos", usuarioService.listarTodos().stream()
+                .filter(u -> u.getPerfil() == Perfil.ALUNO)
+                .toList());
+        model.addAttribute("professores", usuarioService.listarTodos().stream()
+                .filter(u -> u.getPerfil() == Perfil.PROFESSOR)
+                .toList());
         return "secretario/alunos/form";
     }
 
@@ -125,11 +105,8 @@ public class SecretarioAlunoController {
         try {
             Oferta oferta = ofertaService.buscarPorId(ofertaId);
             Usuario aluno = usuarioService.buscarPorId(alunoId);
-            Usuario supervisor = null;
-            if (supervisorId != null) {
-                supervisor = usuarioService.buscarPorId(supervisorId);
-            }
-            inscricaoService.inscrever(aluno, oferta, supervisor);
+            Usuario supervisor = supervisorId != null ? usuarioService.buscarPorId(supervisorId) : null;
+            inscricaoOfertaService.inscrever(aluno, oferta, supervisor);
             ra.addFlashAttribute("sucesso", "Aluno inscrito com sucesso.");
         } catch (RuntimeException e) {
             ra.addFlashAttribute("erro", e.getMessage());
@@ -137,36 +114,34 @@ public class SecretarioAlunoController {
         return "redirect:/secretario/ofertas/" + ofertaId + "/alunos";
     }
 
-    // S.02 - Upload CSV formato RA,NOME COMPLETO,EMAIL
-    @PostMapping("/upload-csv")
+    // S.02 - Inscrição por upload (usando um csv)
+    @PostMapping("/csv")
     public String uploadCsv(@PathVariable Long ofertaId,
-                             @RequestParam("arquivo") MultipartFile arquivo,
-                             RedirectAttributes ra) {
+                            @RequestParam("arquivo") MultipartFile arquivo,
+                            RedirectAttributes ra) {
         try {
-            Oferta oferta = ofertaService.buscarPorId(ofertaId);
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8));
-
-            List<String[]> linhas = new ArrayList<>();
-            reader.readLine(); // pula o cabeçalho
-            String linha;
-            while ((linha = reader.readLine()) != null) {
-                if (!linha.isBlank()) {
-                    linhas.add(linha.split(",", 3));
-                }
-            }
-
-            List<String> falhas = inscricaoService.inscreverPorCsv(linhas, oferta);
-
-            if (falhas.isEmpty()) {
-                ra.addFlashAttribute("sucesso", linhas.size() + " aluno(s) inscritos com sucesso.");
+            ResultadoCsvDTO resultado = inscricaoOfertaService.inscreverPorCsv(arquivo, ofertaId);
+            if (resultado.getFalhas().isEmpty()) {
+                ra.addFlashAttribute("sucesso", resultado.getSucessos() + " aluno(s) foram inscritos com sucesso.");
             } else {
-                ra.addFlashAttribute("sucesso", (linhas.size() - falhas.size()) + " inscrito(s).");
-                ra.addFlashAttribute("errosCsv", falhas);
+                ra.addFlashAttribute("sucesso", resultado.getSucessos() + " aluno(s) foram inscritos com sucesso.");
+                ra.addFlashAttribute("erro", resultado.getFalhas().size() + " aluno(s) não puderam ser inscritos:");
+                ra.addFlashAttribute("errosCsv",  resultado.getFalhas());
             }
         } catch (Exception e) {
             ra.addFlashAttribute("erro", "Erro ao processar arquivo: " + e.getMessage());
         }
         return "redirect:/secretario/ofertas/" + ofertaId + "/alunos";
     }
+
+    @PostMapping("/remover")
+    public String removerAluno(@PathVariable Long ofertaId, @RequestParam Long inscricaoId, RedirectAttributes ra) {
+        try{
+            inscricaoOfertaService.excluir(inscricaoId);
+        } catch(Exception e){
+            ra.addFlashAttribute("erro", "Erro ao deletar o usuário" + e.getMessage());
+        }
+        return "redirect:/secretario/ofertas/" + ofertaId +  "/alunos";
+    }
+
 }

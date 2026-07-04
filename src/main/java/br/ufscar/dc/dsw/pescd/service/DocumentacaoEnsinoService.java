@@ -8,33 +8,33 @@ import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class DocumentacaoEnsinoService {
 
-    @Autowired
-    private DocumentacaoEnsinoRepository documentacaoRepository;
+    private final DocumentacaoEnsinoRepository documentacaoEnsinoRepository;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private LogStatusService logStatusService;
+    private final LogStatusService logStatusService;
+
+    public DocumentacaoEnsinoService(DocumentacaoEnsinoRepository documentacaoEnsinoRepository, InscricaoOfertaRepository inscricaoOfertaRepository,
+                                     LogStatusService logStatusService) {
+
+        this.documentacaoEnsinoRepository = documentacaoEnsinoRepository;
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.logStatusService = logStatusService;
+    }
 
     public void enviarDocumentacao(Long inscricaoId, DocumentacaoEnsino documentacao) {
-        Optional<InscricaoOferta> opt = inscricaoRepository.findById(inscricaoId);
-        if (!opt.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = opt.get();
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId)
+                .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
 
         StatusAluno anterior = inscricao.getStatus();
         documentacao.setInscricao(inscricao);
-        documentacaoRepository.save(documentacao);
+        documentacaoEnsinoRepository.save(documentacao);
 
         inscricao.setStatus(StatusAluno.DOCUMENTACAO_ENVIADA);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
 
         logStatusService.registrar(inscricao, anterior, StatusAluno.DOCUMENTACAO_ENVIADA);
     }

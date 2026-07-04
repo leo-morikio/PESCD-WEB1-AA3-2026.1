@@ -18,8 +18,11 @@ import java.util.Optional;
 @RequestMapping("/admin/configuracao")
 public class AdminConfiguracaoController {
 
-    @Autowired
-    private ConfiguracaoSistemaRepository configuracaoRepository;
+    private final ConfiguracaoSistemaRepository configuracaoRepository;
+
+    public AdminConfiguracaoController(ConfiguracaoSistemaRepository configuracaoRepository) {
+        this.configuracaoRepository = configuracaoRepository;
+    }
 
     private ConfiguracaoSistema getOuCriar() {
         Optional<ConfiguracaoSistema> opt = configuracaoRepository.findById(1L);

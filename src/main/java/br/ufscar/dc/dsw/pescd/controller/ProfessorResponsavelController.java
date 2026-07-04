@@ -11,71 +11,60 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/professor/responsavel")
 public class ProfessorResponsavelController {
 
-    @Autowired
-    private OfertaRepository ofertaRepository;
+    private final OfertaRepository ofertaRepository;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoOfertaRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private PlanoTrabalhoRepository planoRepository;
+    private final PlanoTrabalhoRepository planoTrabalhoRepository;
 
-    @Autowired
-    private RelatorioFinalRepository relatorioRepository;
+    private final RelatorioFinalRepository relatorioFinalRepository;
 
-    @Autowired
-    private DocumentacaoEnsinoRepository documentacaoRepository;
+    private final DocumentacaoEnsinoRepository documentacaoEnsinoRepository;
 
-    @Autowired
-    private LogStatusRepository logStatusRepository;
+    private final LogStatusRepository logStatusRepository;
+
+    public ProfessorResponsavelController(OfertaRepository ofertaRepository, InscricaoOfertaRepository inscricaoOfertaRepository,
+                                          UsuarioRepository usuarioRepository, PlanoTrabalhoRepository planoTrabalhoRepository,
+                                          RelatorioFinalRepository relatorioFinalRepository, DocumentacaoEnsinoRepository documentacaoEnsinoRepository,
+                                          LogStatusRepository logStatusRepository) {
+
+        this.ofertaRepository = ofertaRepository;
+        this.inscricaoOfertaRepository = inscricaoOfertaRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.planoTrabalhoRepository = planoTrabalhoRepository;
+        this.relatorioFinalRepository = relatorioFinalRepository;
+        this.documentacaoEnsinoRepository = documentacaoEnsinoRepository;
+        this.logStatusRepository = logStatusRepository;
+    }
 
     // PR.04 — acompanha ofertas
     @GetMapping("/ofertas")
     public String listarOfertas(Model model) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
         List<Oferta> ofertas = ofertaRepository.findByProfessorResponsavel(professor);
-        Map<Long, List<InscricaoOferta>> inscricoesPorOferta = new HashMap<>();
-        for (Oferta o : ofertas) {
-            inscricoesPorOferta.put(o.getId(), inscricaoRepository.findByOferta(o));
-        }
         model.addAttribute("ofertas", ofertas);
-        model.addAttribute("inscricoesPorOferta", inscricoesPorOferta);
+        model.addAttribute("inscricoesPorOferta",
+                ofertas.stream().collect(java.util.stream.Collectors.toMap(
+                        Oferta::getId,
+                        o -> inscricaoOfertaRepository.findByOferta(o)
+                )));
         return "professor/responsavel/ofertas";
     }
 
     // PR.01 — exibe formulário de conclusão do relatório
     @GetMapping("/concluir-relatorio/{inscricaoId}")
     public String formConcluirRelatorio(@PathVariable Long inscricaoId, Model model) {
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
-
-        PlanoTrabalho plano = null;
-        Optional<PlanoTrabalho> optPlano = planoRepository.findByInscricao(inscricao);
-        if (optPlano.isPresent()) {
-            plano = optPlano.get();
-        }
-
-        RelatorioFinal relatorio = null;
-        Optional<RelatorioFinal> optRelatorio = relatorioRepository.findByInscricao(inscricao);
-        if (optRelatorio.isPresent()) {
-            relatorio = optRelatorio.get();
-        }
-
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId).orElseThrow();
+        PlanoTrabalho plano = planoTrabalhoRepository.findByInscricao(inscricao).orElse(null);
+        RelatorioFinal relatorio = relatorioFinalRepository.findByInscricao(inscricao).orElse(null);
         List<LogStatus> logs = logStatusRepository.findByInscricao(inscricao);
         model.addAttribute("inscricao", inscricao);
         model.addAttribute("plano", plano);
@@ -91,15 +80,11 @@ public class ProfessorResponsavelController {
                                     @RequestParam Integer frequencia,
                                     @RequestParam String nota) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId).orElseThrow();
 
         String statusAnterior = inscricao.getStatus().name();
         inscricao.setStatus(StatusAluno.CONCLUIDO_RESPONSAVEL);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
 
         logStatusRepository.save(new LogStatus(inscricao, statusAnterior,
                 StatusAluno.CONCLUIDO_RESPONSAVEL.name(), professor));
@@ -110,18 +95,8 @@ public class ProfessorResponsavelController {
     // PR.02 — exibe formulário de análise de documentação
     @GetMapping("/analisar-documentacao/{inscricaoId}")
     public String formAnalisarDocumentacao(@PathVariable Long inscricaoId, Model model) {
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
-
-        DocumentacaoEnsino documentacao = null;
-        Optional<DocumentacaoEnsino> optDocumentacao = documentacaoRepository.findByInscricao(inscricao);
-        if (optDocumentacao.isPresent()) {
-            documentacao = optDocumentacao.get();
-        }
-
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId).orElseThrow();
+        DocumentacaoEnsino documentacao = documentacaoEnsinoRepository.findByInscricao(inscricao).orElse(null);
         List<LogStatus> logs = logStatusRepository.findByInscricao(inscricao);
         model.addAttribute("inscricao", inscricao);
         model.addAttribute("documentacao", documentacao);
@@ -136,15 +111,11 @@ public class ProfessorResponsavelController {
                                        @RequestParam Integer indicadorFrequencia,
                                        @RequestParam String nota) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
+        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId).orElseThrow();
 
         String statusAnterior = inscricao.getStatus().name();
         inscricao.setStatus(StatusAluno.CONCLUIDO_RESPONSAVEL);
-        inscricaoRepository.save(inscricao);
+        inscricaoOfertaRepository.save(inscricao);
 
         logStatusRepository.save(new LogStatus(inscricao, statusAnterior,
                 StatusAluno.CONCLUIDO_RESPONSAVEL.name(), professor));
@@ -157,20 +128,11 @@ public class ProfessorResponsavelController {
     public String encerrarOferta(@PathVariable Long ofertaId,
                                  @RequestParam String licoesAprendidas) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        Optional<Oferta> optOferta = ofertaRepository.findById(ofertaId);
-        if (!optOferta.isPresent()) {
-            throw new RuntimeException("Oferta não encontrada");
-        }
-        Oferta oferta = optOferta.get();
+        Oferta oferta = ofertaRepository.findById(ofertaId).orElseThrow();
 
-        List<InscricaoOferta> inscricoes = inscricaoRepository.findByOferta(oferta);
-        boolean todosConcluidos = true;
-        for (InscricaoOferta i : inscricoes) {
-            if (i.getStatus() != StatusAluno.CONCLUIDO_RESPONSAVEL) {
-                todosConcluidos = false;
-                break;
-            }
-        }
+        List<InscricaoOferta> inscricoes = inscricaoOfertaRepository.findByOferta(oferta);
+        boolean todosConcluidos = inscricoes.stream()
+                .allMatch(i -> i.getStatus() == StatusAluno.CONCLUIDO_RESPONSAVEL);
 
         if (todosConcluidos) {
             oferta.setStatus(StatusOferta.AGUARDANDO_ENCERRAMENTO_SECRETARIO);

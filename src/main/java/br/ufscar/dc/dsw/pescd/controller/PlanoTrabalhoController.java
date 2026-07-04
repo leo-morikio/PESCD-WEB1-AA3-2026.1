@@ -18,11 +18,14 @@ import java.util.List;
 @RequestMapping("/aluno/plano")
 public class PlanoTrabalhoController {
 
-    @Autowired
-    private PlanoTrabalhoService planoService;
+    private final PlanoTrabalhoService planoTrabalhoService;
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
+
+    public PlanoTrabalhoController(PlanoTrabalhoService planoTrabalhoService, UsuarioService usuarioService) {
+        this.planoTrabalhoService = planoTrabalhoService;
+        this.usuarioService = usuarioService;
+    }
 
     @GetMapping("/novo/{inscricaoId}")
     public String mostrarFormulario(@PathVariable Long inscricaoId, Model model) {
@@ -45,7 +48,7 @@ public class PlanoTrabalhoController {
                               @RequestParam Long supervisorId,
                               RedirectAttributes ra) {
         try {
-            planoService.enviarPlano(inscricaoId, plano, supervisorId);
+            planoTrabalhoService.enviarPlano(inscricaoId, plano, supervisorId);
             ra.addFlashAttribute("sucesso", "Plano enviado com sucesso.");
         } catch (RuntimeException e) {
             ra.addFlashAttribute("erro", e.getMessage());

@@ -18,26 +18,30 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/professor/supervisor")
 public class ProfessorSupervisorController {
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final InscricaoOfertaRepository inscricaoRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private PlanoTrabalhoRepository planoRepository;
+    private final PlanoTrabalhoRepository planoTrabalhoRepository;
 
-    @Autowired
-    private RelatorioFinalRepository relatorioRepository;
+    private final RelatorioFinalRepository relatorioFinalRepository;
 
-    @Autowired
-    private LogStatusRepository logStatusRepository;
+    private final LogStatusRepository logStatusRepository;
+
+    public ProfessorSupervisorController(InscricaoOfertaRepository inscricaoRepository, UsuarioRepository usuarioRepository,
+                                         PlanoTrabalhoRepository planoTrabalhoRepository, RelatorioFinalRepository relatorioFinalRepository,
+                                         LogStatusRepository logStatusRepository) {
+        this.inscricaoRepository = inscricaoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.planoTrabalhoRepository = planoTrabalhoRepository;
+        this.relatorioFinalRepository = relatorioFinalRepository;
+        this.logStatusRepository = logStatusRepository;
+    }
 
     // PS.01
     @GetMapping("/ofertas")
@@ -51,18 +55,8 @@ public class ProfessorSupervisorController {
     // PS.02 — exibe formulário de aprovação do plano
     @GetMapping("/aprovar-plano/{inscricaoId}")
     public String formAprovarPlano(@PathVariable Long inscricaoId, Model model) {
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
-
-        PlanoTrabalho plano = null;
-        Optional<PlanoTrabalho> optPlano = planoRepository.findByInscricao(inscricao);
-        if (optPlano.isPresent()) {
-            plano = optPlano.get();
-        }
-
+        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
+        PlanoTrabalho plano = planoTrabalhoRepository.findByInscricao(inscricao).orElse(null);
         model.addAttribute("inscricao", inscricao);
         model.addAttribute("plano", plano);
         return "professor/supervisor/aprovar-plano";
@@ -73,11 +67,7 @@ public class ProfessorSupervisorController {
     public String aprovarPlano(@PathVariable Long inscricaoId,
                                @RequestParam String parecer) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
+        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
 
         String statusAnterior = inscricao.getStatus().name();
         inscricao.setStatus(StatusAluno.PLANO_APROVADO);
@@ -92,24 +82,9 @@ public class ProfessorSupervisorController {
     // PS.03 — exibe formulário de aprovação do relatório
     @GetMapping("/aprovar-relatorio/{inscricaoId}")
     public String formAprovarRelatorio(@PathVariable Long inscricaoId, Model model) {
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
-
-        PlanoTrabalho plano = null;
-        Optional<PlanoTrabalho> optPlano = planoRepository.findByInscricao(inscricao);
-        if (optPlano.isPresent()) {
-            plano = optPlano.get();
-        }
-
-        RelatorioFinal relatorio = null;
-        Optional<RelatorioFinal> optRelatorio = relatorioRepository.findByInscricao(inscricao);
-        if (optRelatorio.isPresent()) {
-            relatorio = optRelatorio.get();
-        }
-
+        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
+        PlanoTrabalho plano = planoTrabalhoRepository.findByInscricao(inscricao).orElse(null);
+        RelatorioFinal relatorio = relatorioFinalRepository.findByInscricao(inscricao).orElse(null);
         model.addAttribute("inscricao", inscricao);
         model.addAttribute("plano", plano);
         model.addAttribute("relatorio", relatorio);
@@ -123,11 +98,7 @@ public class ProfessorSupervisorController {
                                    @RequestParam Integer indicadorFrequencia,
                                    @RequestParam String sugestaoNota) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        Optional<InscricaoOferta> optInscricao = inscricaoRepository.findById(inscricaoId);
-        if (!optInscricao.isPresent()) {
-            throw new RuntimeException("Inscrição não encontrada");
-        }
-        InscricaoOferta inscricao = optInscricao.get();
+        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
 
         String statusAnterior = inscricao.getStatus().name();
         inscricao.setStatus(StatusAluno.RELATORIO_APROVADO_SUPERVISOR);

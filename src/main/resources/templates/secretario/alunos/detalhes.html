@@ -85,7 +85,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="log : ${logs}">
-                    <td th:text="${log.dataHora}"></td>
+                    <td th:text="${#temporals.format(log.dataHora, 'dd/MM/yyyy HH:mm:ss')}"></td>
                     <td th:text="${log.statusAnterior != null ? log.statusAnterior : '-'}"></td>
                     <td th:text="${log.statusNovo}"></td>
                     <td th:text="${log.usuarioResponsavel != null ? log.usuarioResponsavel.nomeCompleto : '-'}"></td>

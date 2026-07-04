@@ -12,8 +12,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/aluno/relatorio")
 public class RelatorioFinalController {
 
-    @Autowired
-    private RelatorioFinalService relatorioService;
+    private final RelatorioFinalService relatorioFinalService;
+
+    public RelatorioFinalController(RelatorioFinalService relatorioFinalService) {
+        this.relatorioFinalService = relatorioFinalService;
+    }
 
     @GetMapping("/novo/{inscricaoId}")
     public String mostrarFormulario(@PathVariable Long inscricaoId, Model model) {
@@ -27,7 +30,7 @@ public class RelatorioFinalController {
                                   @ModelAttribute RelatorioFinal relatorio,
                                   RedirectAttributes ra) {
         try {
-            relatorioService.enviarRelatorio(inscricaoId, relatorio);
+            relatorioFinalService.enviarRelatorio(inscricaoId, relatorio);
             ra.addFlashAttribute("sucesso", "Relatório enviado com sucesso.");
         } catch (RuntimeException e) {
             ra.addFlashAttribute("erro", e.getMessage());
