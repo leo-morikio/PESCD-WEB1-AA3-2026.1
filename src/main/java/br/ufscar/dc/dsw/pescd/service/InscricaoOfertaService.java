@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class InscricaoOfertaService {
@@ -25,6 +26,9 @@ public class InscricaoOfertaService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private LogStatusService logStatusService;
 
     public List<InscricaoOferta> listarPorOferta(Oferta oferta) {
         return inscricaoRepository.findByOferta(oferta);
@@ -39,14 +43,22 @@ public class InscricaoOfertaService {
      * RN-1: aluno não pode ser inscrito duas vezes na mesma oferta.
      */
     public void inscrever(Usuario aluno, Oferta oferta) {
-        inscricaoRepository.findByAlunoAndOferta(aluno, oferta).ifPresent(i -> {
+        inscrever(aluno, oferta, null);
+    }
+
+    public void inscrever(Usuario aluno, Oferta oferta, Usuario supervisor) {
+        Optional<InscricaoOferta> existente = inscricaoRepository.findByAlunoAndOferta(aluno, oferta);
+        if (existente.isPresent()) {
             throw new RuntimeException("Aluno já está inscrito nesta oferta.");
-        });
+        }
         InscricaoOferta inscricao = new InscricaoOferta();
         inscricao.setAluno(aluno);
         inscricao.setOferta(oferta);
+        inscricao.setProfessorSupervisor(supervisor);
         inscricao.setStatus(StatusAluno.NAO_ENVIADO);
         inscricaoRepository.save(inscricao);
+
+        logStatusService.registrar(inscricao, null, StatusAluno.NAO_ENVIADO);
     }
 
     /**

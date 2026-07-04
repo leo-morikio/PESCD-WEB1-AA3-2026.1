@@ -56,7 +56,7 @@ public class DataLoader implements CommandLineRunner {
         secretario.setPerfil(Perfil.SECRETARIO);
         usuarioRepository.save(secretario);
 
-        // Professor responsável
+        // Professor
         Usuario professor = new Usuario();
         professor.setNomeCompleto("Prof. André Endo");
         professor.setEmail("professor@ufscar.br");
@@ -86,7 +86,7 @@ public class DataLoader implements CommandLineRunner {
         oferta.setCriadoEm(LocalDateTime.of(2026, 3, 1, 9, 0));
         ofertaRepository.save(oferta);
 
-        // Oferta concluída (exemplo)
+        // Oferta concluída
         Oferta ofertaConcluida = new Oferta();
         ofertaConcluida.setNome("PESCD 2025.2 - Sistemas Distribuídos");
         ofertaConcluida.setSemestre("2025.2");
@@ -98,11 +98,12 @@ public class DataLoader implements CommandLineRunner {
         ofertaConcluida.setCriadoEm(LocalDateTime.of(2025, 8, 1, 9, 0));
         ofertaRepository.save(ofertaConcluida);
 
-        // Inscreve o aluno na oferta em andamento
+        // Inscrição do aluno com plano enviado para demonstração do PS.02
         InscricaoOferta inscricao = new InscricaoOferta();
         inscricao.setAluno(aluno);
         inscricao.setOferta(oferta);
-        inscricao.setStatus(StatusAluno.NAO_ENVIADO);
+        inscricao.setProfessorSupervisor(professor);
+        inscricao.setStatus(StatusAluno.PLANO_ENVIADO);
         inscricaoRepository.save(inscricao);
     }
 }

@@ -2,29 +2,24 @@ package br.ufscar.dc.dsw.pescd.controller;
 
 import br.ufscar.dc.dsw.pescd.model.PlanoTrabalho;
 import br.ufscar.dc.dsw.pescd.service.PlanoTrabalhoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
-@RequestMapping("/aluno/plano")
+@RestController
+@RequestMapping("/api/aluno/plano")
 public class PlanoTrabalhoController {
 
-    @Autowired
-    private PlanoTrabalhoService planoService;
+    private final PlanoTrabalhoService planoService;
 
-    @GetMapping("/novo/{inscricaoId}")
-    public String mostrarFormulario(@PathVariable Long inscricaoId, Model model) {
-        model.addAttribute("plano", new PlanoTrabalho());
-        model.addAttribute("inscricaoId", inscricaoId);
-        return "aluno/form-plano";
+    public PlanoTrabalhoController(PlanoTrabalhoService planoService) {
+        this.planoService = planoService;
     }
 
-    @PostMapping("/enviar/{inscricaoId}")
-    public String enviarPlano(@PathVariable Long inscricaoId,
-                              @ModelAttribute PlanoTrabalho plano) {
-        planoService.enviarPlano(inscricaoId, plano);
-        return "redirect:/aluno/ofertas";
+    @PostMapping("/{inscricaoId}")
+    public ResponseEntity<PlanoTrabalho> enviarPlano(@PathVariable Long inscricaoId,
+                                                     @RequestBody PlanoTrabalho plano) {
+        PlanoTrabalho salvo = planoService.enviarPlano(inscricaoId, plano);
+        return ResponseEntity.status(HttpStatus.CREATED).body(salvo);
     }
 }

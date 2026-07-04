@@ -5,19 +5,21 @@ import br.ufscar.dc.dsw.pescd.model.RelatorioFinal;
 import br.ufscar.dc.dsw.pescd.model.enums.StatusAluno;
 import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
 import br.ufscar.dc.dsw.pescd.repository.RelatorioFinalRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class RelatorioFinalService {
 
-    @Autowired
-    private RelatorioFinalRepository relatorioRepository;
+    private final RelatorioFinalRepository relatorioRepository;
+    private final InscricaoOfertaRepository inscricaoRepository;
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    public RelatorioFinalService(RelatorioFinalRepository relatorioRepository,
+                                 InscricaoOfertaRepository inscricaoRepository) {
+        this.relatorioRepository = relatorioRepository;
+        this.inscricaoRepository = inscricaoRepository;
+    }
 
-    public void enviarRelatorio(Long inscricaoId, RelatorioFinal relatorio) {
+    public RelatorioFinal enviarRelatorio(Long inscricaoId, RelatorioFinal relatorio) {
         InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId)
                 .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
 
@@ -26,9 +28,11 @@ public class RelatorioFinalService {
         }
 
         relatorio.setInscricao(inscricao);
-        relatorioRepository.save(relatorio);
+        RelatorioFinal salvo = relatorioRepository.save(relatorio);
 
         inscricao.setStatus(StatusAluno.RELATORIO_ENVIADO);
         inscricaoRepository.save(inscricao);
+
+        return salvo;
     }
 }

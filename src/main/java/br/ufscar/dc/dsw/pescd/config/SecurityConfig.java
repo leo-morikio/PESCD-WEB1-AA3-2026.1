@@ -8,12 +8,14 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.util.ArrayList;
 import java.util.List;
 
 // U.01 - Configuração de autenticação e autorização
@@ -28,16 +30,17 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService(UsuarioRepository usuarioRepository) {
-        return nomeUsuario -> {
-            Usuario usuario = usuarioRepository.findByNomeUsuario(nomeUsuario);
-            if (usuario == null) {
-                throw new UsernameNotFoundException("Usuário não encontrado: " + nomeUsuario);
+        return new UserDetailsService() {
+            @Override
+            public UserDetails loadUserByUsername(String nomeUsuario) throws UsernameNotFoundException {
+                Usuario usuario = usuarioRepository.findByNomeUsuario(nomeUsuario);
+                if (usuario == null) {
+                    throw new UsernameNotFoundException("Usuário não encontrado: " + nomeUsuario);
+                }
+                List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + usuario.getPerfil().name()));
+                return new User(usuario.getNomeUsuario(), usuario.getSenha(), authorities);
             }
-            return new User(
-                    usuario.getNomeUsuario(),
-                    usuario.getSenha(),
-                    List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getPerfil().name()))
-            );
         };
     }
 
@@ -45,9 +48,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // U.01 RN-1: página inicial pública (visitante)
                 .requestMatchers("/", "/login", "/css/**", "/js/**").permitAll()
-                // Rotas por perfil
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/secretario/**").hasRole("SECRETARIO")
                 .requestMatchers("/professor/**").hasRole("PROFESSOR")

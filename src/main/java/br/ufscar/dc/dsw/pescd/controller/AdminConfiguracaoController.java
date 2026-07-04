@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Optional;
+
 // S.04 RN-3 - Admin configura instruções de encerramento
 @Controller
 @RequestMapping("/admin/configuracao")
@@ -20,11 +22,13 @@ public class AdminConfiguracaoController {
     private ConfiguracaoSistemaRepository configuracaoRepository;
 
     private ConfiguracaoSistema getOuCriar() {
-        return configuracaoRepository.findById(1L).orElseGet(() -> {
-            ConfiguracaoSistema c = new ConfiguracaoSistema();
-            c.setInstrucaoEncerramento("");
-            return c;
-        });
+        Optional<ConfiguracaoSistema> opt = configuracaoRepository.findById(1L);
+        if (opt.isPresent()) {
+            return opt.get();
+        }
+        ConfiguracaoSistema c = new ConfiguracaoSistema();
+        c.setInstrucaoEncerramento("");
+        return c;
     }
 
     @GetMapping

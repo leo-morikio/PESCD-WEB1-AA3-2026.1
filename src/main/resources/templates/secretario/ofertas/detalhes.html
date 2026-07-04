@@ -48,22 +48,36 @@
         </div>
     </div>
 
+    <!-- S.03 RN-2 - Alunos inscritos e status -->
+    <h2 class="h5 mb-3">Alunos Inscritos</h2>
+    <div th:if="${#lists.isEmpty(inscritos)}" class="alert alert-info mb-4">
+        Nenhum aluno inscrito nesta oferta.
+    </div>
+    <table th:if="${!#lists.isEmpty(inscritos)}" class="table table-bordered table-hover mb-4">
+        <thead class="table-primary">
+        <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="i : ${inscritos}">
+            <td th:text="${i.aluno.nomeCompleto}"></td>
+            <td th:text="${i.aluno.email}"></td>
+            <td th:text="${i.statusExibicao}"></td>
+            <td>
+                <!-- S.03 RN-3 -->
+                <a th:href="@{/secretario/ofertas/{oid}/alunos/{iid}(oid=${oferta.id},iid=${i.id})}"
+                   class="btn btn-sm btn-outline-info">Ver Detalhes</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
     <a th:href="@{/secretario/ofertas/{id}/alunos(id=${oferta.id})}"
        class="btn btn-outline-primary mb-4">Gerenciar Alunos</a>
-
-    <!-- S.04 - Iniciar encerramento -->
-    <div th:if="${oferta.status.name() == 'ATIVA'}" class="card border-warning mb-4">
-        <div class="card-header text-warning fw-bold">Encerrar Oferta</div>
-        <div class="card-body">
-            <p class="text-muted">Ao iniciar o encerramento, a oferta entrará em estado de aguardo para confirmação.</p>
-            <form th:action="@{/secretario/ofertas/{id}/iniciar-encerramento(id=${oferta.id})}" method="post">
-                <button type="submit" class="btn btn-warning"
-                        onclick="return confirm('Iniciar processo de encerramento desta oferta?')">
-                    Iniciar Encerramento
-                </button>
-            </form>
-        </div>
-    </div>
 
     <!-- S.04 - Confirmar encerramento -->
     <div th:if="${oferta.status.name() == 'AGUARDANDO_ENCERRAMENTO_SECRETARIO'}" class="card border-danger mb-4">

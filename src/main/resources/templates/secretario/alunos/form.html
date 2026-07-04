@@ -70,6 +70,7 @@
         <tr>
             <th>Nome</th>
             <th>E-mail</th>
+            <th>Supervisor</th>
             <th>Status</th>
         </tr>
         </thead>
@@ -77,10 +78,11 @@
         <tr th:each="i : ${inscritos}">
             <td th:text="${i.aluno.nomeCompleto}"></td>
             <td th:text="${i.aluno.email}"></td>
+            <td th:text="${i.professorSupervisor != null ? i.professorSupervisor.nomeCompleto : '-'}"></td>
             <td th:text="${i.statusExibicao}"></td>
         </tr>
         <tr th:if="${#lists.isEmpty(inscritos)}">
-            <td colspan="3" class="text-center text-muted">Nenhum aluno inscrito.</td>
+            <td colspan="4" class="text-center text-muted">Nenhum aluno inscrito.</td>
         </tr>
         </tbody>
     </table>

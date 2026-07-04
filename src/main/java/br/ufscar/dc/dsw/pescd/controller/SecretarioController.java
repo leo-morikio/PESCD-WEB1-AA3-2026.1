@@ -6,6 +6,7 @@ import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.model.enums.Perfil;
 import br.ufscar.dc.dsw.pescd.model.enums.StatusOferta;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
+import br.ufscar.dc.dsw.pescd.service.InscricaoOfertaService;
 import br.ufscar.dc.dsw.pescd.service.OfertaService;
 import br.ufscar.dc.dsw.pescd.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 // S.01, S.03, S.04 - Secretário gerencia ofertas
@@ -27,6 +29,9 @@ public class SecretarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private InscricaoOfertaService inscricaoService;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -43,10 +48,15 @@ public class SecretarioController {
     // S.01 - Formulário nova oferta
     @GetMapping("/ofertas/nova")
     public String novaOferta(Model model) {
+        List<Usuario> todos = usuarioService.listarTodos();
+        List<Usuario> professores = new ArrayList<>();
+        for (Usuario u : todos) {
+            if (u.getPerfil() == Perfil.PROFESSOR) {
+                professores.add(u);
+            }
+        }
         model.addAttribute("oferta", new Oferta());
-        model.addAttribute("professores", usuarioService.listarTodos().stream()
-                .filter(u -> u.getPerfil() == Perfil.PROFESSOR)
-                .toList());
+        model.addAttribute("professores", professores);
         return "secretario/ofertas/form";
     }
 
@@ -84,25 +94,8 @@ public class SecretarioController {
         Oferta oferta = ofertaService.buscarPorId(id);
         model.addAttribute("oferta", oferta);
         model.addAttribute("ofertaService", ofertaService);
+        model.addAttribute("inscritos", inscricaoService.listarPorOferta(oferta));
         return "secretario/ofertas/detalhes";
-    }
-
-    // S.04 - Iniciar encerramento
-    @PostMapping("/ofertas/{id}/iniciar-encerramento")
-    public String iniciarEncerramento(@PathVariable Long id, RedirectAttributes ra) {
-        try {
-            Oferta oferta = ofertaService.buscarPorId(id);
-            if (oferta.getStatus() != StatusOferta.ATIVA) {
-                ra.addFlashAttribute("erro", "Apenas ofertas ativas podem ser encerradas.");
-                return "redirect:/secretario/ofertas/" + id;
-            }
-            oferta.setStatus(StatusOferta.AGUARDANDO_ENCERRAMENTO_SECRETARIO);
-            ofertaService.salvar(oferta, UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository));
-            ra.addFlashAttribute("sucesso", "Oferta marcada para encerramento.");
-        } catch (RuntimeException e) {
-            ra.addFlashAttribute("erro", e.getMessage());
-        }
-        return "redirect:/secretario/ofertas/" + id;
     }
 
     // S.04 - Confirmar encerramento

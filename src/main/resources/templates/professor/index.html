@@ -43,7 +43,9 @@
     </div>
 
     <div class="mt-4">
-        <a th:href="@{/logout}" class="btn btn-outline-secondary">Sair</a>
+        <form th:action="@{/logout}" method="post" class="d-inline">
+            <button type="submit" class="btn btn-outline-secondary">Sair</button>
+        </form>
     </div>
 </div>
 
