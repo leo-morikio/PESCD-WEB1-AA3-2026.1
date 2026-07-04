@@ -1,6 +1,7 @@
 package br.ufscar.dc.dsw.pescd.service;
 
 import br.ufscar.dc.dsw.pescd.dto.ResultadoCsvDTO;
+import br.ufscar.dc.dsw.pescd.exception.NegocioException;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.Oferta;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
@@ -12,7 +13,6 @@ import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,9 +40,11 @@ public class InscricaoOfertaService {
 
     private final LogStatusRepository logStatusRepository;
 
+    private final ArquivoValidador arquivoValidador;
+
     public InscricaoOfertaService(InscricaoOfertaRepository inscricaoOfertaRepository, UsuarioRepository usuarioRepository,
                                   PasswordEncoder passwordEncoder, LogStatusService logStatusService, OfertaService ofertaService,
-                                  LogStatusRepository logStatusRepository) {
+                                  LogStatusRepository logStatusRepository, ArquivoValidador arquivoValidador) {
 
         this.inscricaoOfertaRepository = inscricaoOfertaRepository;
         this.usuarioRepository = usuarioRepository;
@@ -50,6 +52,7 @@ public class InscricaoOfertaService {
         this.logStatusService = logStatusService;
         this.ofertaService = ofertaService;
         this.logStatusRepository = logStatusRepository;
+        this.arquivoValidador = arquivoValidador;
     }
 
     public List<InscricaoOferta> listarPorOferta(Oferta oferta) {
@@ -69,9 +72,9 @@ public class InscricaoOfertaService {
     }
 
     public void inscrever(Usuario aluno, Oferta oferta, Usuario supervisor) {
-        inscricaoOfertaRepository.findByAlunoAndOferta(aluno, oferta).ifPresent(i -> {
-            throw new RuntimeException("Aluno já está inscrito nesta oferta.");
-        });
+        if (inscricaoOfertaRepository.findByAlunoAndOferta(aluno, oferta).isPresent()) {
+            throw new NegocioException("Aluno já está inscrito nesta oferta.");
+        }
         InscricaoOferta inscricao = new InscricaoOferta();
         inscricao.setAluno(aluno);
         inscricao.setOferta(oferta);
@@ -89,6 +92,7 @@ public class InscricaoOfertaService {
      */
 
     public ResultadoCsvDTO inscreverPorCsv(MultipartFile arquivo, Long ofertaId) throws IOException {
+        arquivoValidador.validarCsv(arquivo);
         int sucessos = 0;
         List<String> falhas = new ArrayList<>();
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
