@@ -13,8 +13,11 @@ import java.util.List;
 @Controller
 public class VisitanteController {
 
-    @Autowired
-    private OfertaService ofertaService;
+    private final OfertaService ofertaService;
+
+    public VisitanteController(OfertaService ofertaService) {
+        this.ofertaService = ofertaService;
+    }
 
     @GetMapping("/")
     public String index(Model model) {
