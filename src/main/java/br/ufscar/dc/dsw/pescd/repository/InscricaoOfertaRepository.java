@@ -14,4 +14,5 @@ public interface InscricaoOfertaRepository extends JpaRepository<InscricaoOferta
     List<InscricaoOferta> findByProfessorSupervisor(Usuario professor);
     Optional<InscricaoOferta> findByAlunoAndOferta(Usuario aluno, Oferta oferta);
     long countByOferta(Oferta oferta);
+    void deleteByAlunoId(Long alunoId);
 }

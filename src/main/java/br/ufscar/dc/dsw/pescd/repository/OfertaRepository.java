@@ -9,4 +9,5 @@ import java.util.List;
 public interface OfertaRepository extends JpaRepository<Oferta, Long> {
     List<Oferta> findAllByOrderBySemestreDesc();
     List<Oferta> findByProfessorResponsavel(Usuario professor);
+    List<Oferta> findByCriadoPorId(Long id);
 }
