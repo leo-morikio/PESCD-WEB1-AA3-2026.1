@@ -47,12 +47,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // API REST é stateless do ponto de vista de CSRF (sem formulários HTML);
+            // autenticação ainda é por sessão até a migração para JWT.
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/css/**", "/js/**").permitAll()
+                // V.01 - API pública de ofertas (sem login)
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/ofertas").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/secretario/**").hasRole("SECRETARIO")
                 .requestMatchers("/professor/**").hasRole("PROFESSOR")
                 .requestMatchers("/aluno/**").hasRole("ALUNO")
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/secretario/**").hasRole("SECRETARIO")
+                .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
+                .requestMatchers("/api/aluno/**").hasRole("ALUNO")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
