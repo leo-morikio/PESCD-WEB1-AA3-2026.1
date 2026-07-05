@@ -1,8 +1,17 @@
 package br.ufscar.dc.dsw.pescd.controller.rest;
 
+import br.ufscar.dc.dsw.pescd.dto.DocumentacaoEnsinoResponseDTO;
 import br.ufscar.dc.dsw.pescd.dto.InscreverAlunoRequestDTO;
 import br.ufscar.dc.dsw.pescd.dto.InscricaoOfertaResponseDTO;
+import br.ufscar.dc.dsw.pescd.dto.LogStatusResponseDTO;
+import br.ufscar.dc.dsw.pescd.dto.PlanoTrabalhoResponseDTO;
+import br.ufscar.dc.dsw.pescd.dto.RelatorioFinalResponseDTO;
 import br.ufscar.dc.dsw.pescd.dto.ResultadoCsvDTO;
+import br.ufscar.dc.dsw.pescd.dto.UsuarioResponseDTO;
+import br.ufscar.dc.dsw.pescd.model.DocumentacaoEnsino;
+import br.ufscar.dc.dsw.pescd.model.LogStatus;
+import br.ufscar.dc.dsw.pescd.model.PlanoTrabalho;
+import br.ufscar.dc.dsw.pescd.model.RelatorioFinal;
 import br.ufscar.dc.dsw.pescd.exception.RecursoNaoEncontradoException;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.Oferta;
@@ -69,14 +78,14 @@ public class SecretarioAlunoRestController {
         }
 
         List<Usuario> todosUsuarios = usuarioService.listarTodos();
-        List<Usuario> alunosDisponiveis = new java.util.ArrayList<>();
-        List<Usuario> professores = new java.util.ArrayList<>();
+        List<UsuarioResponseDTO> alunosDisponiveis = new java.util.ArrayList<>();
+        List<UsuarioResponseDTO> professores = new java.util.ArrayList<>();
         for (Usuario usuario : todosUsuarios) {
             if (usuario.getPerfil() == Perfil.ALUNO) {
-                alunosDisponiveis.add(usuario);
+                alunosDisponiveis.add(new UsuarioResponseDTO(usuario));
             }
             if (usuario.getPerfil() == Perfil.PROFESSOR) {
-                professores.add(usuario);
+                professores.add(new UsuarioResponseDTO(usuario));
             }
         }
 
@@ -96,12 +105,36 @@ public class SecretarioAlunoRestController {
         }
         InscricaoOferta inscricao = optInscricao.get();
 
+        Optional<PlanoTrabalho> optPlano = planoTrabalhoRepository.findByInscricao(inscricao);
+        PlanoTrabalhoResponseDTO planoDto = null;
+        if (optPlano.isPresent()) {
+            planoDto = new PlanoTrabalhoResponseDTO(optPlano.get());
+        }
+
+        Optional<RelatorioFinal> optRelatorio = relatorioFinalRepository.findByInscricao(inscricao);
+        RelatorioFinalResponseDTO relatorioDto = null;
+        if (optRelatorio.isPresent()) {
+            relatorioDto = new RelatorioFinalResponseDTO(optRelatorio.get());
+        }
+
+        Optional<DocumentacaoEnsino> optDocumentacao = documentacaoEnsinoRepository.findByInscricao(inscricao);
+        DocumentacaoEnsinoResponseDTO documentacaoDto = null;
+        if (optDocumentacao.isPresent()) {
+            documentacaoDto = new DocumentacaoEnsinoResponseDTO(optDocumentacao.get());
+        }
+
+        List<LogStatus> logs = logStatusRepository.findByInscricao(inscricao);
+        List<LogStatusResponseDTO> logsDto = new java.util.ArrayList<>();
+        for (LogStatus log : logs) {
+            logsDto.add(new LogStatusResponseDTO(log));
+        }
+
         Map<String, Object> resposta = new java.util.HashMap<>();
         resposta.put("inscricao", new InscricaoOfertaResponseDTO(inscricao));
-        resposta.put("plano", planoTrabalhoRepository.findByInscricao(inscricao).orElse(null));
-        resposta.put("relatorio", relatorioFinalRepository.findByInscricao(inscricao).orElse(null));
-        resposta.put("documentacao", documentacaoEnsinoRepository.findByInscricao(inscricao).orElse(null));
-        resposta.put("logs", logStatusRepository.findByInscricao(inscricao));
+        resposta.put("plano", planoDto);
+        resposta.put("relatorio", relatorioDto);
+        resposta.put("documentacao", documentacaoDto);
+        resposta.put("logs", logsDto);
         return resposta;
     }
 
