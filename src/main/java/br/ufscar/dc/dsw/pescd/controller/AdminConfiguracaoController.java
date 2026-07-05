@@ -2,7 +2,6 @@ package br.ufscar.dc.dsw.pescd.controller;
 
 import br.ufscar.dc.dsw.pescd.model.ConfiguracaoSistema;
 import br.ufscar.dc.dsw.pescd.repository.ConfiguracaoSistemaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

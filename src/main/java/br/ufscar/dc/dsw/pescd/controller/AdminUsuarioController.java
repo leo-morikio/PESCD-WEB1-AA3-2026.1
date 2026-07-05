@@ -5,7 +5,6 @@ import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.model.enums.Perfil;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
 import br.ufscar.dc.dsw.pescd.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
