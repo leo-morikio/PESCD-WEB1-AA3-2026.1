@@ -69,12 +69,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/ofertas").permitAll()
-                        .requestMatchers("/", "/css/**", "/js/**").permitAll()
-                        // Rotas de tela (AA-2 - se ainda usadas)
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/secretario/**").hasRole("SECRETARIO")
-                        .requestMatchers("/professor/**").hasRole("PROFESSOR")
-                        .requestMatchers("/aluno/**").hasRole("ALUNO")
                         // Rotas REST protegidas por perfil
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/secretario/**").hasRole("SECRETARIO")
