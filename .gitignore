@@ -35,3 +35,6 @@ build/
 ### Local config ###
 application-local.properties
 src/main/resources/application-local.properties
+
+### Uploads (arquivos enviados em runtime, nao fazem parte do codigo-fonte) ###
+uploads/

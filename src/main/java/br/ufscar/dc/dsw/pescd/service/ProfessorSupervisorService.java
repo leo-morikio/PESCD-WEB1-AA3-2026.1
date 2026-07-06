@@ -25,15 +25,18 @@ public class ProfessorSupervisorService {
     private final LogStatusRepository logStatusRepository;
     private final PlanoTrabalhoRepository planoTrabalhoRepository;
     private final RelatorioFinalRepository relatorioFinalRepository;
+    private final ArquivoStorageService arquivoStorageService;
 
     public ProfessorSupervisorService(InscricaoOfertaRepository inscricaoRepository,
                                       LogStatusRepository logStatusRepository,
                                       PlanoTrabalhoRepository planoTrabalhoRepository,
-                                      RelatorioFinalRepository relatorioFinalRepository) {
+                                      RelatorioFinalRepository relatorioFinalRepository,
+                                      ArquivoStorageService arquivoStorageService) {
         this.inscricaoRepository = inscricaoRepository;
         this.logStatusRepository = logStatusRepository;
         this.planoTrabalhoRepository = planoTrabalhoRepository;
         this.relatorioFinalRepository = relatorioFinalRepository;
+        this.arquivoStorageService = arquivoStorageService;
     }
 
     // PS.01 - lista inscrições que este professor supervisiona
@@ -41,9 +44,42 @@ public class ProfessorSupervisorService {
         return inscricaoRepository.findByProfessorSupervisor(professor);
     }
 
+    // PS.02/PS.03 RN-2 - dados do plano e do relatório para leitura antes de aprovar
+    public InscricaoOferta detalhes(Long inscricaoId, Usuario professor) {
+        return buscarInscricaoSupervisionada(inscricaoId, professor);
+    }
+
+    public Optional<PlanoTrabalho> buscarPlano(InscricaoOferta inscricao) {
+        return planoTrabalhoRepository.findByInscricao(inscricao);
+    }
+
+    public Optional<RelatorioFinal> buscarRelatorio(InscricaoOferta inscricao) {
+        return relatorioFinalRepository.findByInscricao(inscricao);
+    }
+
+    // Download do PDF do plano de trabalho (PS.02)
+    public byte[] baixarArquivoPlano(Long inscricaoId, Usuario professor) {
+        InscricaoOferta inscricao = buscarInscricaoSupervisionada(inscricaoId, professor);
+        Optional<PlanoTrabalho> optPlano = planoTrabalhoRepository.findByInscricao(inscricao);
+        if (!optPlano.isPresent()) {
+            throw new RecursoNaoEncontradoException("Plano de trabalho não encontrado para a inscrição: " + inscricaoId);
+        }
+        return arquivoStorageService.lerArquivo(optPlano.get().getCaminhoArquivo());
+    }
+
+    // Download do PDF do relatório final (PS.03)
+    public byte[] baixarArquivoRelatorio(Long inscricaoId, Usuario professor) {
+        InscricaoOferta inscricao = buscarInscricaoSupervisionada(inscricaoId, professor);
+        Optional<RelatorioFinal> optRelatorio = relatorioFinalRepository.findByInscricao(inscricao);
+        if (!optRelatorio.isPresent()) {
+            throw new RecursoNaoEncontradoException("Relatório final não encontrado para a inscrição: " + inscricaoId);
+        }
+        return arquivoStorageService.lerArquivo(optRelatorio.get().getCaminhoArquivo());
+    }
+
     // PS.02 - aprova plano de trabalho, registrando o parecer do supervisor
     public InscricaoOferta aprovarPlano(Long inscricaoId, String parecer, Usuario professor) {
-        InscricaoOferta inscricao = buscarInscricao(inscricaoId);
+        InscricaoOferta inscricao = buscarInscricaoSupervisionada(inscricaoId, professor);
 
         if (inscricao.getStatus() != StatusAluno.PLANO_ENVIADO) {
             throw new NegocioException("Só é possível aprovar um plano que foi enviado.");
@@ -70,7 +106,7 @@ public class ProfessorSupervisorService {
     // PS.03 - aprova relatório final, registrando parecer, frequência e sugestão de nota
     public InscricaoOferta aprovarRelatorio(Long inscricaoId, String parecer, Integer indicadorFrequencia,
                                             NotaAvaliacao notaFinal, Usuario professor) {
-        InscricaoOferta inscricao = buscarInscricao(inscricaoId);
+        InscricaoOferta inscricao = buscarInscricaoSupervisionada(inscricaoId, professor);
 
         if (inscricao.getStatus() != StatusAluno.RELATORIO_ENVIADO) {
             throw new NegocioException("Só é possível aprovar um relatório que foi enviado.");
@@ -108,6 +144,16 @@ public class ProfessorSupervisorService {
             throw new RecursoNaoEncontradoException("Inscrição não encontrada: " + inscricaoId);
         }
         return opt.get();
+    }
+
+    // Garante que a inscrição pertence a este professor supervisor (evita ver dados de outro supervisor)
+    private InscricaoOferta buscarInscricaoSupervisionada(Long inscricaoId, Usuario professor) {
+        InscricaoOferta inscricao = buscarInscricao(inscricaoId);
+        Usuario supervisor = inscricao.getProfessorSupervisor();
+        if (supervisor == null || !supervisor.getId().equals(professor.getId())) {
+            throw new RecursoNaoEncontradoException("Inscrição não encontrada: " + inscricaoId);
+        }
+        return inscricao;
     }
 
     private void registrarLog(InscricaoOferta inscricao, String anterior, String novo, Usuario professor) {

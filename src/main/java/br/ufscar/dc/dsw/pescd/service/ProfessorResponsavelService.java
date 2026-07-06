@@ -7,6 +7,7 @@ import br.ufscar.dc.dsw.pescd.model.DocumentacaoEnsino;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.LogStatus;
 import br.ufscar.dc.dsw.pescd.model.Oferta;
+import br.ufscar.dc.dsw.pescd.model.PlanoTrabalho;
 import br.ufscar.dc.dsw.pescd.model.RelatorioFinal;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.model.enums.NotaAvaliacao;
@@ -16,6 +17,7 @@ import br.ufscar.dc.dsw.pescd.repository.DocumentacaoEnsinoRepository;
 import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
 import br.ufscar.dc.dsw.pescd.repository.LogStatusRepository;
 import br.ufscar.dc.dsw.pescd.repository.OfertaRepository;
+import br.ufscar.dc.dsw.pescd.repository.PlanoTrabalhoRepository;
 import br.ufscar.dc.dsw.pescd.repository.RelatorioFinalRepository;
 import org.springframework.stereotype.Service;
 
@@ -31,23 +33,66 @@ public class ProfessorResponsavelService {
     private final LogStatusRepository logStatusRepository;
     private final RelatorioFinalRepository relatorioFinalRepository;
     private final DocumentacaoEnsinoRepository documentacaoEnsinoRepository;
+    private final PlanoTrabalhoRepository planoTrabalhoRepository;
+    private final ArquivoStorageService arquivoStorageService;
 
     public ProfessorResponsavelService(InscricaoOfertaRepository inscricaoRepository,
                                        OfertaRepository ofertaRepository,
                                        LogStatusRepository logStatusRepository,
                                        RelatorioFinalRepository relatorioFinalRepository,
-                                       DocumentacaoEnsinoRepository documentacaoEnsinoRepository) {
+                                       DocumentacaoEnsinoRepository documentacaoEnsinoRepository,
+                                       PlanoTrabalhoRepository planoTrabalhoRepository,
+                                       ArquivoStorageService arquivoStorageService) {
         this.inscricaoRepository = inscricaoRepository;
         this.ofertaRepository = ofertaRepository;
         this.logStatusRepository = logStatusRepository;
         this.relatorioFinalRepository = relatorioFinalRepository;
         this.documentacaoEnsinoRepository = documentacaoEnsinoRepository;
+        this.planoTrabalhoRepository = planoTrabalhoRepository;
+        this.arquivoStorageService = arquivoStorageService;
+    }
+
+    // PR.01/PR.02 RN-2 - dados do plano, relatório e documentação para leitura antes de decidir
+    public InscricaoOferta detalhes(Long inscricaoId, Usuario professor) {
+        return buscarInscricaoDaOferta(inscricaoId, professor);
+    }
+
+    public Optional<PlanoTrabalho> buscarPlano(InscricaoOferta inscricao) {
+        return planoTrabalhoRepository.findByInscricao(inscricao);
+    }
+
+    public Optional<RelatorioFinal> buscarRelatorio(InscricaoOferta inscricao) {
+        return relatorioFinalRepository.findByInscricao(inscricao);
+    }
+
+    public Optional<DocumentacaoEnsino> buscarDocumentacao(InscricaoOferta inscricao) {
+        return documentacaoEnsinoRepository.findByInscricao(inscricao);
+    }
+
+    // Download do PDF do relatório final (apoia a leitura exigida em PR.01 RN-2)
+    public byte[] baixarArquivoRelatorio(Long inscricaoId, Usuario professor) {
+        InscricaoOferta inscricao = buscarInscricaoDaOferta(inscricaoId, professor);
+        Optional<RelatorioFinal> optRelatorio = relatorioFinalRepository.findByInscricao(inscricao);
+        if (!optRelatorio.isPresent()) {
+            throw new RecursoNaoEncontradoException("Relatório final não encontrado para a inscrição: " + inscricaoId);
+        }
+        return arquivoStorageService.lerArquivo(optRelatorio.get().getCaminhoArquivo());
+    }
+
+    // Download do PDF da documentação de ensino (apoia a leitura exigida em PR.02 RN-2)
+    public byte[] baixarArquivoDocumentacao(Long inscricaoId, Usuario professor) {
+        InscricaoOferta inscricao = buscarInscricaoDaOferta(inscricaoId, professor);
+        Optional<DocumentacaoEnsino> optDocumentacao = documentacaoEnsinoRepository.findByInscricao(inscricao);
+        if (!optDocumentacao.isPresent()) {
+            throw new RecursoNaoEncontradoException("Documentação não encontrada para a inscrição: " + inscricaoId);
+        }
+        return arquivoStorageService.lerArquivo(optDocumentacao.get().getCaminhoArquivo());
     }
 
     // PR.01 - conclui o relatório do aluno, registrando parecer, frequência e nota finais
     public InscricaoOferta concluirRelatorio(Long inscricaoId, String parecer, Integer frequencia,
                                              NotaAvaliacao nota, Usuario professor) {
-        InscricaoOferta inscricao = buscarInscricao(inscricaoId);
+        InscricaoOferta inscricao = buscarInscricaoDaOferta(inscricaoId, professor);
 
         if (inscricao.getStatus() != StatusAluno.RELATORIO_APROVADO_SUPERVISOR) {
             throw new NegocioException("O relatório precisa estar aprovado pelo supervisor antes de concluir.");
@@ -82,7 +127,7 @@ public class ProfessorResponsavelService {
     // PR.02 - analisa documentação e conclui, registrando parecer, indicador de frequência e nota
     public InscricaoOferta analisarDocumentacao(Long inscricaoId, String parecer, Integer indicadorFrequencia,
                                                 NotaAvaliacao nota, Usuario professor) {
-        InscricaoOferta inscricao = buscarInscricao(inscricaoId);
+        InscricaoOferta inscricao = buscarInscricaoDaOferta(inscricaoId, professor);
 
         if (inscricao.getStatus() != StatusAluno.DOCUMENTACAO_ENVIADA) {
             throw new NegocioException("Só é possível analisar uma documentação que foi enviada.");
@@ -221,6 +266,16 @@ public class ProfessorResponsavelService {
             throw new RecursoNaoEncontradoException("Inscrição não encontrada: " + inscricaoId);
         }
         return opt.get();
+    }
+
+    // Garante que a inscrição pertence a uma oferta da qual este professor é o responsável
+    private InscricaoOferta buscarInscricaoDaOferta(Long inscricaoId, Usuario professor) {
+        InscricaoOferta inscricao = buscarInscricao(inscricaoId);
+        Usuario responsavel = inscricao.getOferta().getProfessorResponsavel();
+        if (responsavel == null || !responsavel.getId().equals(professor.getId())) {
+            throw new RecursoNaoEncontradoException("Inscrição não encontrada: " + inscricaoId);
+        }
+        return inscricao;
     }
 
     private void registrarLog(InscricaoOferta inscricao, String anterior, String novo, Usuario professor) {

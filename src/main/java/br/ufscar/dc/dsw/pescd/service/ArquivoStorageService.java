@@ -51,4 +51,17 @@ public class ArquivoStorageService {
             throw new RuntimeException("Erro ao salvar o arquivo: " + e.getMessage());
         }
     }
+
+    // Lê os bytes de um arquivo já salvo, para servir como download (plano/documentação/relatório)
+    public byte[] lerArquivo(String caminhoArquivo) {
+        if (caminhoArquivo == null || caminhoArquivo.isBlank()) {
+            throw new RuntimeException("Nenhum arquivo disponível.");
+        }
+        try {
+            Path caminho = Paths.get(caminhoArquivo);
+            return Files.readAllBytes(caminho);
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao ler o arquivo: " + e.getMessage());
+        }
+    }
 }

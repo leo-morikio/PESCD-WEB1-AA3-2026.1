@@ -200,6 +200,9 @@
       "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
       "item": [
         { "name": "PS.01 - Listar inscrições supervisionadas", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/supervisor/inscricoes" } },
+        { "name": "PS.02/PS.03 RN-2 - Detalhes da inscrição (plano + relatório, leitura)", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/supervisor/inscricoes/{{inscricaoId}}" } },
+        { "name": "Baixar PDF do plano de trabalho", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/supervisor/inscricoes/{{inscricaoId}}/plano/arquivo" } },
+        { "name": "Baixar PDF do relatório final", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/supervisor/inscricoes/{{inscricaoId}}/relatorio/arquivo" } },
         {
           "name": "PS.02 - Aprovar plano de trabalho (usa a inscrição seedada, caminho do estágio)",
           "request": {
@@ -225,6 +228,10 @@
       "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
       "item": [
         { "name": "Listar ofertas do professor responsável", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/ofertas" } },
+        { "name": "PR.01 RN-2 - Detalhes da inscrição do estágio (plano + relatório, leitura)", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/inscricoes/{{inscricaoId}}" } },
+        { "name": "PR.02 RN-2 - Detalhes da inscrição alternativa (documentação, leitura)", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/inscricoes/{{inscricaoIdAlt}}" } },
+        { "name": "Baixar PDF do relatório final", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/inscricoes/{{inscricaoId}}/relatorio/arquivo" } },
+        { "name": "Baixar PDF da documentação de ensino", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/inscricoes/{{inscricaoIdAlt}}/documentacao/arquivo" } },
         {
           "name": "PR.01 - Concluir relatório (caminho do estágio, após PS.03)",
           "request": {
