@@ -104,6 +104,10 @@ public class SecretarioAlunoRestController {
             throw new RecursoNaoEncontradoException("Inscrição não encontrada: " + inscricaoId);
         }
         InscricaoOferta inscricao = optInscricao.get();
+        if (!inscricao.getOferta().getId().equals(ofertaId)) {
+            throw new RecursoNaoEncontradoException(
+                    "Inscrição " + inscricaoId + " não pertence à oferta " + ofertaId);
+        }
 
         Optional<PlanoTrabalho> optPlano = planoTrabalhoRepository.findByInscricao(inscricao);
         PlanoTrabalhoResponseDTO planoDto = null;
@@ -162,6 +166,14 @@ public class SecretarioAlunoRestController {
     // S.02 - Remove aluno da oferta
     @DeleteMapping("/{inscricaoId}")
     public ResponseEntity<Void> remover(@PathVariable Long ofertaId, @PathVariable Long inscricaoId) {
+        Optional<InscricaoOferta> optInscricao = inscricaoOfertaRepository.findById(inscricaoId);
+        if (!optInscricao.isPresent()) {
+            throw new RecursoNaoEncontradoException("Inscrição não encontrada: " + inscricaoId);
+        }
+        if (!optInscricao.get().getOferta().getId().equals(ofertaId)) {
+            throw new RecursoNaoEncontradoException(
+                    "Inscrição " + inscricaoId + " não pertence à oferta " + ofertaId);
+        }
         inscricaoOfertaService.excluir(inscricaoId);
         return ResponseEntity.noContent().build();
     }
