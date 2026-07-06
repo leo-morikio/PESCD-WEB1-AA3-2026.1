@@ -1,107 +1,119 @@
 package br.ufscar.dc.dsw.pescd.controller;
 
 import br.ufscar.dc.dsw.pescd.config.UsuarioLogadoUtil;
+import br.ufscar.dc.dsw.pescd.dto.AprovarPlanoRequestDTO;
+import br.ufscar.dc.dsw.pescd.dto.AprovarRelatorioRequestDTO;
+import br.ufscar.dc.dsw.pescd.dto.InscricaoOfertaResponseDTO;
+import br.ufscar.dc.dsw.pescd.dto.PlanoTrabalhoResponseDTO;
+import br.ufscar.dc.dsw.pescd.dto.RelatorioFinalResponseDTO;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
-import br.ufscar.dc.dsw.pescd.model.LogStatus;
 import br.ufscar.dc.dsw.pescd.model.PlanoTrabalho;
 import br.ufscar.dc.dsw.pescd.model.RelatorioFinal;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
-import br.ufscar.dc.dsw.pescd.model.enums.StatusAluno;
-import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
-import br.ufscar.dc.dsw.pescd.repository.LogStatusRepository;
-import br.ufscar.dc.dsw.pescd.repository.PlanoTrabalhoRepository;
-import br.ufscar.dc.dsw.pescd.repository.RelatorioFinalRepository;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import br.ufscar.dc.dsw.pescd.service.ProfessorSupervisorService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-@Controller
-@RequestMapping("/professor/supervisor")
+/**
+ * PS.01, PS.02, PS.03 - Professor supervisor acompanha e aprova planos/relatórios (versão REST).
+ */
+@RestController
+@RequestMapping("/api/professor/supervisor")
 public class ProfessorSupervisorController {
 
-    @Autowired
-    private InscricaoOfertaRepository inscricaoRepository;
+    private final ProfessorSupervisorService supervisorService;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    public ProfessorSupervisorController(ProfessorSupervisorService supervisorService,
+                                         UsuarioRepository usuarioRepository) {
+        this.supervisorService = supervisorService;
+        this.usuarioRepository = usuarioRepository;
+    }
 
-    @Autowired
-    private PlanoTrabalhoRepository planoRepository;
-
-    @Autowired
-    private RelatorioFinalRepository relatorioRepository;
-
-    @Autowired
-    private LogStatusRepository logStatusRepository;
-
-    // PS.01
-    @GetMapping("/ofertas")
-    public String listarOfertas(Model model) {
+    // PS.01 - lista inscrições supervisionadas
+    @GetMapping("/inscricoes")
+    public List<InscricaoOfertaResponseDTO> listarInscricoes() {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        List<InscricaoOferta> inscricoes = inscricaoRepository.findByProfessorSupervisor(professor);
-        model.addAttribute("inscricoes", inscricoes);
-        return "professor/supervisor/ofertas";
+        List<InscricaoOferta> inscricoes = supervisorService.listarInscricoes(professor);
+        List<InscricaoOfertaResponseDTO> resposta = new ArrayList<>();
+        for (InscricaoOferta inscricao : inscricoes) {
+            resposta.add(new InscricaoOfertaResponseDTO(inscricao));
+        }
+        return resposta;
     }
 
-    // PS.02 — exibe formulário de aprovação do plano
-    @GetMapping("/aprovar-plano/{inscricaoId}")
-    public String formAprovarPlano(@PathVariable Long inscricaoId, Model model) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
-        PlanoTrabalho plano = planoRepository.findByInscricao(inscricao).orElse(null);
-        model.addAttribute("inscricao", inscricao);
-        model.addAttribute("plano", plano);
-        return "professor/supervisor/aprovar-plano";
-    }
-
-    // PS.02 — processa aprovação do plano
-    @PostMapping("/aprovar-plano/{inscricaoId}")
-    public String aprovarPlano(@PathVariable Long inscricaoId,
-                               @RequestParam String parecer) {
+    // PS.02/PS.03 RN-2 - dados do plano e do relatório, somente leitura, antes de aprovar
+    @GetMapping("/inscricoes/{inscricaoId}")
+    public Map<String, Object> detalhes(@PathVariable Long inscricaoId) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
+        InscricaoOferta inscricao = supervisorService.detalhes(inscricaoId, professor);
 
-        String statusAnterior = inscricao.getStatus().name();
-        inscricao.setStatus(StatusAluno.PLANO_APROVADO);
-        inscricaoRepository.save(inscricao);
+        Optional<PlanoTrabalho> optPlano = supervisorService.buscarPlano(inscricao);
+        PlanoTrabalhoResponseDTO planoDto = null;
+        if (optPlano.isPresent()) {
+            planoDto = new PlanoTrabalhoResponseDTO(optPlano.get());
+        }
 
-        logStatusRepository.save(new LogStatus(inscricao, statusAnterior,
-                StatusAluno.PLANO_APROVADO.name(), professor));
+        Optional<RelatorioFinal> optRelatorio = supervisorService.buscarRelatorio(inscricao);
+        RelatorioFinalResponseDTO relatorioDto = null;
+        if (optRelatorio.isPresent()) {
+            relatorioDto = new RelatorioFinalResponseDTO(optRelatorio.get());
+        }
 
-        return "redirect:/professor/supervisor/ofertas";
+        Map<String, Object> resposta = new HashMap<>();
+        resposta.put("inscricao", new InscricaoOfertaResponseDTO(inscricao));
+        resposta.put("plano", planoDto);
+        resposta.put("relatorio", relatorioDto);
+        return resposta;
     }
 
-    // PS.03 — exibe formulário de aprovação do relatório
-    @GetMapping("/aprovar-relatorio/{inscricaoId}")
-    public String formAprovarRelatorio(@PathVariable Long inscricaoId, Model model) {
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
-        PlanoTrabalho plano = planoRepository.findByInscricao(inscricao).orElse(null);
-        RelatorioFinal relatorio = relatorioRepository.findByInscricao(inscricao).orElse(null);
-        model.addAttribute("inscricao", inscricao);
-        model.addAttribute("plano", plano);
-        model.addAttribute("relatorio", relatorio);
-        return "professor/supervisor/aprovar-relatorio";
-    }
-
-    // PS.03 — processa aprovação do relatório
-    @PostMapping("/aprovar-relatorio/{inscricaoId}")
-    public String aprovarRelatorio(@PathVariable Long inscricaoId,
-                                   @RequestParam String parecer,
-                                   @RequestParam Integer indicadorFrequencia,
-                                   @RequestParam String sugestaoNota) {
+    // Download do PDF do plano de trabalho (apoia a leitura exigida em PS.02 RN-2)
+    @GetMapping("/inscricoes/{inscricaoId}/plano/arquivo")
+    public ResponseEntity<byte[]> baixarArquivoPlano(@PathVariable Long inscricaoId) {
         Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
-        InscricaoOferta inscricao = inscricaoRepository.findById(inscricaoId).orElseThrow();
+        byte[] arquivo = supervisorService.baixarArquivoPlano(inscricaoId, professor);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"plano-" + inscricaoId + ".pdf\"")
+                .body(arquivo);
+    }
 
-        String statusAnterior = inscricao.getStatus().name();
-        inscricao.setStatus(StatusAluno.RELATORIO_APROVADO_SUPERVISOR);
-        inscricaoRepository.save(inscricao);
+    // Download do PDF do relatório final (apoia a leitura exigida em PS.03 RN-2)
+    @GetMapping("/inscricoes/{inscricaoId}/relatorio/arquivo")
+    public ResponseEntity<byte[]> baixarArquivoRelatorio(@PathVariable Long inscricaoId) {
+        Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
+        byte[] arquivo = supervisorService.baixarArquivoRelatorio(inscricaoId, professor);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"relatorio-" + inscricaoId + ".pdf\"")
+                .body(arquivo);
+    }
 
-        logStatusRepository.save(new LogStatus(inscricao, statusAnterior,
-                StatusAluno.RELATORIO_APROVADO_SUPERVISOR.name(), professor));
+    // PS.02 - aprova plano (RN-3: exige parecer)
+    @PutMapping("/aprovar-plano/{inscricaoId}")
+    public InscricaoOfertaResponseDTO aprovarPlano(@PathVariable Long inscricaoId,
+                                                   @RequestBody AprovarPlanoRequestDTO dto) {
+        Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
+        InscricaoOferta inscricao = supervisorService.aprovarPlano(inscricaoId, dto.getParecer(), professor);
+        return new InscricaoOfertaResponseDTO(inscricao);
+    }
 
-        return "redirect:/professor/supervisor/ofertas";
+    // PS.03 - aprova relatório (RN-3: exige parecer, indicador de frequência e sugestão de nota)
+    @PutMapping("/aprovar-relatorio/{inscricaoId}")
+    public InscricaoOfertaResponseDTO aprovarRelatorio(@PathVariable Long inscricaoId,
+                                                       @RequestBody AprovarRelatorioRequestDTO dto) {
+        Usuario professor = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
+        InscricaoOferta inscricao = supervisorService.aprovarRelatorio(
+                inscricaoId, dto.getParecer(), dto.getIndicadorFrequencia(), dto.getNotaFinal(), professor);
+        return new InscricaoOfertaResponseDTO(inscricao);
     }
 }

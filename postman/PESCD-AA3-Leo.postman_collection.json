@@ -1,0 +1,345 @@
+{
+  "info": {
+    "name": "PESCD AA3 - Leo (Admin, Visitante, Secretário) + verificação geral",
+    "description": "Coleção para validar manualmente as user stories de Admin (AD.01), Visitante (V.01) e Secretário (S.01-S.04), com pastas extras para conferir Professor (PS/PR) e Aluno (AL.01-AL.04), já que fazem parte do mesmo fluxo de dados. Autenticação via JWT (Authorization: Bearer {{token}}) - sem CSRF, sem sessão.\n\nIMPORTANTE sobre o fluxo do aluno: AL.03 (documentação de ensino) é uma via ALTERNATIVA e mutuamente exclusiva ao caminho do estágio (AL.02 plano -> AL.04 relatório). Uma inscrição só pode seguir um dos dois caminhos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "usuarioId", "value": "" },
+    { "key": "ofertaId", "value": "1" },
+    { "key": "inscricaoId", "value": "1" },
+    { "key": "inscricaoIdAlt", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Autenticação",
+      "item": [
+        {
+          "name": "Login - Admin",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeUsuario\": \"admin\",\n  \"senha\": \"123\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "event": [ { "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.collectionVariables.set(\"token\", json.token);"
+          ] } } ]
+        },
+        {
+          "name": "Login - Secretário",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeUsuario\": \"secretario\",\n  \"senha\": \"123\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "event": [ { "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.collectionVariables.set(\"token\", json.token);"
+          ] } } ]
+        },
+        {
+          "name": "Login - Professor",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeUsuario\": \"professor\",\n  \"senha\": \"123\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "event": [ { "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.collectionVariables.set(\"token\", json.token);"
+          ] } } ]
+        },
+        {
+          "name": "Login - Aluno",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeUsuario\": \"aluno\",\n  \"senha\": \"123\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "event": [ { "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.collectionVariables.set(\"token\", json.token);"
+          ] } } ]
+        }
+      ]
+    },
+    {
+      "name": "1. Visitante (V.01)",
+      "item": [
+        {
+          "name": "Listar ofertas (público, sem token)",
+          "request": { "method": "GET", "auth": { "type": "noauth" }, "url": "{{baseUrl}}/api/ofertas" }
+        }
+      ]
+    },
+    {
+      "name": "2. Admin - Usuários (AD.01)",
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
+      "item": [
+        { "name": "Listar usuários", "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/usuarios" } },
+        { "name": "Buscar usuário por id", "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/usuarios/{{usuarioId}}" } },
+        {
+          "name": "Criar usuário",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCompleto\": \"Novo Aluno Teste\",\n  \"email\": \"novoaluno@ufscar.br\",\n  \"nomeUsuario\": \"novoaluno\",\n  \"senha\": \"123\",\n  \"perfil\": \"ALUNO\"\n}" },
+            "url": "{{baseUrl}}/api/admin/usuarios"
+          },
+          "event": [ { "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.id) { pm.collectionVariables.set(\"usuarioId\", json.id); }"
+          ] } } ]
+        },
+        {
+          "name": "Atualizar usuário",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCompleto\": \"Novo Aluno Teste (Editado)\",\n  \"email\": \"novoaluno@ufscar.br\",\n  \"nomeUsuario\": \"novoaluno\",\n  \"senha\": \"\",\n  \"perfil\": \"ALUNO\"\n}" },
+            "url": "{{baseUrl}}/api/admin/usuarios/{{usuarioId}}"
+          }
+        },
+        { "name": "Excluir usuário", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/admin/usuarios/{{usuarioId}}" } }
+      ]
+    },
+    {
+      "name": "3. Admin - Configuração (S.04 RN-3)",
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
+      "item": [
+        { "name": "Buscar configuração", "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/configuracao" } },
+        {
+          "name": "Salvar configuração",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"instrucaoEncerramento\": \"Enviar relatório final e lições aprendidas até o fim do semestre.\"\n}" },
+            "url": "{{baseUrl}}/api/admin/configuracao"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Secretário - Ofertas (S.01, S.03, S.04)",
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
+      "item": [
+        { "name": "Listar ofertas", "request": { "method": "GET", "url": "{{baseUrl}}/api/secretario/ofertas" } },
+        { "name": "Detalhes da oferta", "request": { "method": "GET", "url": "{{baseUrl}}/api/secretario/ofertas/{{ofertaId}}" } },
+        {
+          "name": "Criar oferta (S.01) - precisa de professor responsável",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"PESCD 2026.2 - Testes de Software\",\n  \"semestre\": \"2026.2\",\n  \"dataInicio\": \"2026-08-01\",\n  \"dataFim\": \"2026-12-01\",\n  \"professorResponsavelId\": 3\n}" },
+            "url": "{{baseUrl}}/api/secretario/ofertas"
+          },
+          "event": [ { "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.id) { pm.collectionVariables.set(\"ofertaId\", json.id); }"
+          ] } } ]
+        },
+        {
+          "name": "Criar oferta sem professor - erro esperado (400)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Oferta invalida\",\n  \"semestre\": \"2026.2\",\n  \"dataInicio\": \"2026-08-01\",\n  \"dataFim\": \"2026-12-01\",\n  \"professorResponsavelId\": null\n}" },
+            "url": "{{baseUrl}}/api/secretario/ofertas"
+          }
+        },
+        {
+          "name": "Encerrar oferta (S.04) - erro esperado se não estiver aguardando encerramento",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"licoesAprendidas\": \"O grupo teve boa comunicação e cumpriu os prazos.\"\n}" },
+            "url": "{{baseUrl}}/api/secretario/ofertas/{{ofertaId}}/encerrar"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Secretário - Alunos da Oferta (S.02, S.03)",
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
+      "item": [
+        { "name": "Listar alunos inscritos + disponíveis", "request": { "method": "GET", "url": "{{baseUrl}}/api/secretario/ofertas/{{ofertaId}}/alunos" } },
+        { "name": "Detalhes da inscrição (plano, relatório, docs, logs)", "request": { "method": "GET", "url": "{{baseUrl}}/api/secretario/ofertas/{{ofertaId}}/alunos/{{inscricaoId}}" } },
+        {
+          "name": "Inscrever aluno manualmente (S.02) - alimenta o caminho alternativo (AL.03)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"alunoId\": 6\n}" },
+            "url": "{{baseUrl}}/api/secretario/ofertas/{{ofertaId}}/alunos"
+          },
+          "event": [ { "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.id) { pm.collectionVariables.set(\"inscricaoIdAlt\", json.id); }"
+          ] } } ]
+        },
+        {
+          "name": "Inscrever alunos via CSV (S.02)",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [ { "key": "arquivo", "type": "file", "src": "" } ] },
+            "url": "{{baseUrl}}/api/secretario/ofertas/{{ofertaId}}/alunos/csv"
+          }
+        },
+        { "name": "Remover aluno da oferta", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/secretario/ofertas/{{ofertaId}}/alunos/{{inscricaoIdAlt}}" } }
+      ]
+    },
+    {
+      "name": "6. Professor Supervisor (PS.01, PS.02, PS.03) - fora do seu escopo, incluído para conferência",
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
+      "item": [
+        { "name": "PS.01 - Listar inscrições supervisionadas", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/supervisor/inscricoes" } },
+        { "name": "PS.02/PS.03 RN-2 - Detalhes da inscrição (plano + relatório, leitura)", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/supervisor/inscricoes/{{inscricaoId}}" } },
+        { "name": "Baixar PDF do plano de trabalho", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/supervisor/inscricoes/{{inscricaoId}}/plano/arquivo" } },
+        { "name": "Baixar PDF do relatório final", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/supervisor/inscricoes/{{inscricaoId}}/relatorio/arquivo" } },
+        {
+          "name": "PS.02 - Aprovar plano de trabalho (usa a inscrição seedada, caminho do estágio)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"parecer\": \"Plano bem estruturado, pode iniciar o estágio.\"\n}" },
+            "url": "{{baseUrl}}/api/professor/supervisor/aprovar-plano/{{inscricaoId}}"
+          }
+        },
+        {
+          "name": "PS.03 - Aprovar relatório final (rodar após AL.04)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"parecer\": \"Relatório completo e satisfatório.\",\n  \"indicadorFrequencia\": 95,\n  \"notaFinal\": \"A\"\n}" },
+            "url": "{{baseUrl}}/api/professor/supervisor/aprovar-relatorio/{{inscricaoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Professor Responsável (PR.01, PR.02, PR.03) - fora do seu escopo, incluído para conferência",
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
+      "item": [
+        { "name": "Listar ofertas do professor responsável", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/ofertas" } },
+        { "name": "PR.01 RN-2 - Detalhes da inscrição do estágio (plano + relatório, leitura)", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/inscricoes/{{inscricaoId}}" } },
+        { "name": "PR.02 RN-2 - Detalhes da inscrição alternativa (documentação, leitura)", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/inscricoes/{{inscricaoIdAlt}}" } },
+        { "name": "Baixar PDF do relatório final", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/inscricoes/{{inscricaoId}}/relatorio/arquivo" } },
+        { "name": "Baixar PDF da documentação de ensino", "request": { "method": "GET", "url": "{{baseUrl}}/api/professor/responsavel/inscricoes/{{inscricaoIdAlt}}/documentacao/arquivo" } },
+        {
+          "name": "PR.01 - Concluir relatório (caminho do estágio, após PS.03)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"parecer\": \"Estágio concluído com êxito.\",\n  \"frequencia\": 95,\n  \"nota\": \"A\"\n}" },
+            "url": "{{baseUrl}}/api/professor/responsavel/concluir-relatorio/{{inscricaoId}}"
+          }
+        },
+        {
+          "name": "PR.02 - Analisar documentação (caminho alternativo AL.03, sem passar por PS)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"parecer\": \"Documentação comprobatória válida.\",\n  \"indicadorFrequencia\": 100,\n  \"nota\": \"B\"\n}" },
+            "url": "{{baseUrl}}/api/professor/responsavel/analisar-documentacao/{{inscricaoIdAlt}}"
+          }
+        },
+        {
+          "name": "PR.03 - Encerrar oferta (só se todos concluídos)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"licoesAprendidas\": \"Boa experiência de supervisão.\"\n}" },
+            "url": "{{baseUrl}}/api/professor/responsavel/encerrar-oferta/{{ofertaId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Aluno - Caminho do Estágio: AL.01, AL.02, AL.04 - fora do seu escopo, incluído para conferência",
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
+      "item": [
+        { "name": "AL.01 - Listar minhas ofertas/inscrições", "request": { "method": "GET", "url": "{{baseUrl}}/api/aluno/ofertas" } },
+        {
+          "name": "AL.02 - Enviar plano de trabalho (só funciona 1x por inscrição; usa {{inscricaoId}}, já seedado)",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "codigoDisciplina", "value": "CCM0121", "type": "text" },
+              { "key": "nomeDisciplina", "value": "Engenharia de Software", "type": "text" },
+              { "key": "curso", "value": "Ciência da Computação", "type": "text" },
+              { "key": "supervisorId", "value": "3", "type": "text" },
+              { "key": "arquivo", "type": "file", "src": "" }
+            ] },
+            "url": "{{baseUrl}}/api/aluno/plano/{{inscricaoId}}"
+          }
+        },
+        {
+          "name": "AL.04 - Enviar relatório final (rodar depois de PS.02 aprovar o plano)",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "indicadorFrequencia", "value": "100", "type": "text" },
+              { "key": "arquivo", "type": "file", "src": "" }
+            ] },
+            "url": "{{baseUrl}}/api/aluno/relatorio/{{inscricaoId}}"
+          }
+        },
+        {
+          "name": "Erro esperado (400): AL.03 na mesma inscrição do estágio (já tem plano)",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "nomeInstituicao", "value": "UFSCar", "type": "text" },
+              { "key": "nomeDisciplina", "value": "Engenharia de Software", "type": "text" },
+              { "key": "curso", "value": "Ciência da Computação", "type": "text" },
+              { "key": "cargaHoraria", "value": "60", "type": "text" },
+              { "key": "arquivo", "type": "file", "src": "" }
+            ] },
+            "url": "{{baseUrl}}/api/aluno/documentacao/{{inscricaoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Aluno - Caminho Alternativo: AL.03 (sem estágio) - fora do seu escopo, incluído para conferência",
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
+      "item": [
+        {
+          "name": "AL.03 - Enviar documentação (usa {{inscricaoIdAlt}}, inscrição nova sem plano)",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "nomeInstituicao", "value": "Universidade Federal Exemplo", "type": "text" },
+              { "key": "nomeDisciplina", "value": "Cálculo I", "type": "text" },
+              { "key": "curso", "value": "Matemática", "type": "text" },
+              { "key": "cargaHoraria", "value": "80", "type": "text" },
+              { "key": "arquivo", "type": "file", "src": "" }
+            ] },
+            "url": "{{baseUrl}}/api/aluno/documentacao/{{inscricaoIdAlt}}"
+          }
+        },
+        {
+          "name": "Erro esperado (400): AL.02 na mesma inscrição alternativa (já tem documentação)",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "codigoDisciplina", "value": "CCM0121", "type": "text" },
+              { "key": "nomeDisciplina", "value": "Engenharia de Software", "type": "text" },
+              { "key": "curso", "value": "Ciência da Computação", "type": "text" },
+              { "key": "supervisorId", "value": "3", "type": "text" },
+              { "key": "arquivo", "type": "file", "src": "" }
+            ] },
+            "url": "{{baseUrl}}/api/aluno/plano/{{inscricaoIdAlt}}"
+          }
+        }
+      ]
+    }
+  ]
+}

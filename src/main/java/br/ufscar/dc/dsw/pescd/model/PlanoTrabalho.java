@@ -19,6 +19,9 @@ public class PlanoTrabalho {
     private String curso;
     private String caminhoArquivo;
 
+    // PS.02 RN-3 - parecer do professor supervisor ao aprovar o plano
+    private String parecerSupervisor;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -36,4 +39,7 @@ public class PlanoTrabalho {
 
     public String getCaminhoArquivo() { return caminhoArquivo; }
     public void setCaminhoArquivo(String caminhoArquivo) { this.caminhoArquivo = caminhoArquivo; }
+
+    public String getParecerSupervisor() { return parecerSupervisor; }
+    public void setParecerSupervisor(String parecerSupervisor) { this.parecerSupervisor = parecerSupervisor; }
 }
