@@ -23,7 +23,7 @@ public class LogStatusService {
     }
 
     /**
-     * S.03 RN-3 - Registra mudança de status de um aluno na inscrição.
+     * S.03 RN-3 - Registra mudança de status de um aluno na inscrição
      */
     public void registrar(InscricaoOferta inscricao, StatusAluno anterior, StatusAluno novo) {
         Usuario responsavel = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
