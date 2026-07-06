@@ -2,39 +2,27 @@ package br.ufscar.dc.dsw.pescd.controller;
 
 import br.ufscar.dc.dsw.pescd.model.RelatorioFinal;
 import br.ufscar.dc.dsw.pescd.service.RelatorioFinalService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-@Controller
-@RequestMapping("/aluno/relatorio")
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/aluno/relatorio")
 public class RelatorioFinalController {
 
-    private final RelatorioFinalService relatorioFinalService;
+    private final RelatorioFinalService relatorioService;
 
-    public RelatorioFinalController(RelatorioFinalService relatorioFinalService) {
-        this.relatorioFinalService = relatorioFinalService;
+    public RelatorioFinalController(RelatorioFinalService relatorioService) {
+        this.relatorioService = relatorioService;
     }
 
-    @GetMapping("/novo/{inscricaoId}")
-    public String mostrarFormulario(@PathVariable Long inscricaoId, Model model) {
-        model.addAttribute("relatorio", new RelatorioFinal());
-        model.addAttribute("inscricaoId", inscricaoId);
-        return "aluno/form-relatorio";
-    }
-
-    @PostMapping("/enviar/{inscricaoId}")
-    public String enviarRelatorio(@PathVariable Long inscricaoId,
-                                  @ModelAttribute RelatorioFinal relatorio,
-                                  RedirectAttributes ra) {
-        try {
-            relatorioFinalService.enviarRelatorio(inscricaoId, relatorio);
-            ra.addFlashAttribute("sucesso", "Relatório enviado com sucesso.");
-        } catch (RuntimeException e) {
-            ra.addFlashAttribute("erro", e.getMessage());
-        }
-        return "redirect:/aluno/ofertas";
+    @PostMapping("/{inscricaoId}")
+    public ResponseEntity<Map<String, String>> enviarRelatorio(@PathVariable Long inscricaoId,
+                                                               @RequestBody RelatorioFinal relatorio) {
+        relatorioService.enviarRelatorio(inscricaoId, relatorio);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("mensagem", "Relatório enviado com sucesso"));
     }
 }
