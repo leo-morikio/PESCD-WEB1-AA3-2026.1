@@ -58,14 +58,24 @@ A resposta traz um token JWT. Use-o nas próximas requisições no header:
 - **S.03** — Secretário acompanha ofertas
 - **S.04** — Secretário encerra oferta
 
-**AA-3 (REST API):**
+**AA-3 (REST API) — user stories ponta-a-ponta (Controller REST → Service → Repository/JPA):**
 
-- Conversão das histórias de Admin, Secretário e Visitante para REST controllers (pasta `controller/rest`)
+- **AD.01** — Administrador gerencia usuários via REST (`AdminUsuarioRestController`, `UsuarioService`)
+- **V.01** — Visitante visualiza ofertas via REST, endpoint público (`VisitanteRestController`, `OfertaService`)
+- **S.01, S.02, S.03, S.04** — Secretário cria/acompanha/encerra ofertas e adiciona alunos via REST (`SecretarioOfertaRestController`, `SecretarioAlunoRestController`, `OfertaService`, `InscricaoOfertaService`)
+- **PS.01, PR.02, PR.03** — Histórias do professor herdadas do João (professor supervisor acompanha inscrições; professor responsável analisa documentação e encerra oferta), refatoradas para remover lambdas/method references, corrigir vazamento de senha e adicionar os campos obrigatórios de parecer/frequência/nota e as estatísticas de encerramento
+
+**Outras contribuições técnicas (AA-3):**
+
+- Infraestrutura REST comum: DTOs de request/response e tratamento global de erros (`GlobalExceptionHandler`, `RecursoNaoEncontradoException`, `NegocioException`)
 - Migração do banco de dados para **MySQL** (`mysql-connector-j`)
-- Adição da biblioteca **Apache Commons CSV** (parsing seguro do CSV da S.02)
-- Refatoração para **injeção de dependência via construtor** (remoção de `@Autowired`)
-- Correção de vazamento de senha em endpoints GET
-- **Histórias do professor (originalmente do João):** PS.01, PR.02, PR.03
+- Adição da biblioteca **Apache Commons CSV** e validação real de tipo de arquivo (content-type + magic bytes, não só extensão)
+- `SecurityConfig`: libera/protege rotas `/api/**` por perfil, desabilita CSRF para a API
+- Correção de vazamento de senha em múltiplos endpoints GET (entidades JPA expostas sem DTO)
+- Exclusão em cascata de usuário (aluno remove inscrições, secretário desvincula ofertas)
+- Externalização do segredo JWT, remoção de method references do `JwtService`
+- Remoção dos Controllers MVC e templates Thymeleaf órfãos (sem uso após a migração para REST + JWT stateless), limpeza do `pom.xml` e do `SecurityConfig`
+- Refatoração para **injeção de dependência via construtor** (remoção de `@Autowired`) em todo o projeto
 
 ---
 
@@ -130,7 +140,7 @@ A resposta traz um token JWT. Use-o nas próximas requisições no header:
 
 ## Correções e melhorias aplicadas do feedback da AA-2
 
-- ✅ Remoção do `@Autowired` (injeção via construtor)
-- ✅ Uso da biblioteca **Apache Commons CSV** no parsing (S.02)
-- ✅ Migração para **MySQL** (produção)
-- ✅ Refatoração para reduzir métodos longos e classes com muitas dependências
+- Remoção do `@Autowired` (injeção via construtor)
+- Uso da biblioteca **Apache Commons CSV** no parsing (S.02)
+- Migração para **MySQL** (produção)
+- Refatoração para reduzir métodos longos e classes com muitas dependências

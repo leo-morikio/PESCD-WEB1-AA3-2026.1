@@ -45,7 +45,7 @@ public class PlanoTrabalhoService {
         }
 
         if (inscricao.getStatus() != StatusAluno.NAO_ENVIADO) {
-            throw new NegocioException("Já existe um plano de trabalho enviado para esta inscrição.");
+            throw new NegocioException("Não é possível enviar plano de trabalho: esta inscrição já possui um plano enviado, ou já seguiu o caminho da documentação de ensino (AL.03), que é alternativo ao estágio.");
         }
 
         Optional<Usuario> optSupervisor = usuarioRepository.findById(supervisorId);
