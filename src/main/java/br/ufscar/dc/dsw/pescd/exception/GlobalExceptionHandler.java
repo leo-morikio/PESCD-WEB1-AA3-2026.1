@@ -12,8 +12,9 @@ import java.io.IOException;
 /**
  * Tratamento centralizado de erros para os endpoints REST (/api/**),
  * padronizando o corpo de resposta em caso de falha.
+ * Cobre br.ufscar.dc.dsw.pescd.controller e seu subpacote controller.rest.
  */
-@RestControllerAdvice(basePackages = "br.ufscar.dc.dsw.pescd.controller.rest")
+@RestControllerAdvice(basePackages = "br.ufscar.dc.dsw.pescd.controller")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)

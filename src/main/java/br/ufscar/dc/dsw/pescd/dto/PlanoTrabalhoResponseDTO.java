@@ -10,6 +10,7 @@ public class PlanoTrabalhoResponseDTO {
     private String nomeDisciplina;
     private String curso;
     private String caminhoArquivo;
+    private String parecerSupervisor;
 
     public PlanoTrabalhoResponseDTO(PlanoTrabalho plano) {
         this.id = plano.getId();
@@ -17,6 +18,7 @@ public class PlanoTrabalhoResponseDTO {
         this.nomeDisciplina = plano.getNomeDisciplina();
         this.curso = plano.getCurso();
         this.caminhoArquivo = plano.getCaminhoArquivo();
+        this.parecerSupervisor = plano.getParecerSupervisor();
     }
 
     public Long getId() { return id; }
@@ -24,4 +26,5 @@ public class PlanoTrabalhoResponseDTO {
     public String getNomeDisciplina() { return nomeDisciplina; }
     public String getCurso() { return curso; }
     public String getCaminhoArquivo() { return caminhoArquivo; }
+    public String getParecerSupervisor() { return parecerSupervisor; }
 }

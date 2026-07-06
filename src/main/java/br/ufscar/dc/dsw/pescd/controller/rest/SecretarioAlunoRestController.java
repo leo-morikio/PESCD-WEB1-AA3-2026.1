@@ -73,15 +73,17 @@ public class SecretarioAlunoRestController {
 
         List<InscricaoOferta> inscricoes = inscricaoOfertaService.listarPorOferta(oferta);
         List<InscricaoOfertaResponseDTO> inscritos = new java.util.ArrayList<>();
+        List<Long> idsInscritos = new java.util.ArrayList<>();
         for (InscricaoOferta inscricao : inscricoes) {
             inscritos.add(new InscricaoOfertaResponseDTO(inscricao));
+            idsInscritos.add(inscricao.getAluno().getId());
         }
 
         List<Usuario> todosUsuarios = usuarioService.listarTodos();
         List<UsuarioResponseDTO> alunosDisponiveis = new java.util.ArrayList<>();
         List<UsuarioResponseDTO> professores = new java.util.ArrayList<>();
         for (Usuario usuario : todosUsuarios) {
-            if (usuario.getPerfil() == Perfil.ALUNO) {
+            if (usuario.getPerfil() == Perfil.ALUNO && !idsInscritos.contains(usuario.getId())) {
                 alunosDisponiveis.add(new UsuarioResponseDTO(usuario));
             }
             if (usuario.getPerfil() == Perfil.PROFESSOR) {
@@ -148,8 +150,12 @@ public class SecretarioAlunoRestController {
                                                                 @RequestBody InscreverAlunoRequestDTO dto) {
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
         Usuario aluno = usuarioService.buscarPorId(dto.getAlunoId());
-        Usuario supervisor = dto.getSupervisorId() != null ? usuarioService.buscarPorId(dto.getSupervisorId()) : null;
-        inscricaoOfertaService.inscrever(aluno, oferta, supervisor);
+        if (dto.getSupervisorId() != null) {
+            Usuario supervisor = usuarioService.buscarPorId(dto.getSupervisorId());
+            inscricaoOfertaService.inscrever(aluno, oferta, supervisor);
+        } else {
+            inscricaoOfertaService.inscrever(aluno, oferta);
+        }
 
         Optional<InscricaoOferta> optInscricao = inscricaoOfertaRepository.findByAlunoAndOferta(aluno, oferta);
         InscricaoOferta inscricao = optInscricao.get();

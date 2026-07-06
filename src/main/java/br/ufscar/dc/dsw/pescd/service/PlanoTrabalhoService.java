@@ -1,5 +1,7 @@
 package br.ufscar.dc.dsw.pescd.service;
 
+import br.ufscar.dc.dsw.pescd.exception.NegocioException;
+import br.ufscar.dc.dsw.pescd.exception.RecursoNaoEncontradoException;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.PlanoTrabalho;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
@@ -7,8 +9,9 @@ import br.ufscar.dc.dsw.pescd.model.enums.StatusAluno;
 import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
 import br.ufscar.dc.dsw.pescd.repository.PlanoTrabalhoRepository;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class PlanoTrabalhoService {
@@ -29,13 +32,27 @@ public class PlanoTrabalhoService {
         this.logStatusService = logStatusService;
     }
 
-    public void enviarPlano(Long inscricaoId, PlanoTrabalho plano, Long supervisorId) {
-        InscricaoOferta inscricao = inscricaoOfertaRepository.findById(inscricaoId)
-                .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
+    // AL.02 - aluno envia plano de trabalho e escolhe o professor supervisor
+    public void enviarPlano(Long inscricaoId, PlanoTrabalho plano, Long supervisorId, Usuario aluno) {
+        Optional<InscricaoOferta> optInscricao = inscricaoOfertaRepository.findById(inscricaoId);
+        if (!optInscricao.isPresent()) {
+            throw new RecursoNaoEncontradoException("Inscrição não encontrada: " + inscricaoId);
+        }
+        InscricaoOferta inscricao = optInscricao.get();
 
-        Usuario supervisor = usuarioRepository.findById(supervisorId)
-                .orElseThrow(() -> new RuntimeException("Professor supervisor não encontrado"));
-        inscricao.setProfessorSupervisor(supervisor);
+        if (!inscricao.getAluno().getId().equals(aluno.getId())) {
+            throw new RecursoNaoEncontradoException("Inscrição não encontrada: " + inscricaoId);
+        }
+
+        if (inscricao.getStatus() != StatusAluno.NAO_ENVIADO) {
+            throw new NegocioException("Já existe um plano de trabalho enviado para esta inscrição.");
+        }
+
+        Optional<Usuario> optSupervisor = usuarioRepository.findById(supervisorId);
+        if (!optSupervisor.isPresent()) {
+            throw new RecursoNaoEncontradoException("Professor supervisor não encontrado: " + supervisorId);
+        }
+        inscricao.setProfessorSupervisor(optSupervisor.get());
 
         plano.setInscricao(inscricao);
         planoTrabalhoRepository.save(plano);

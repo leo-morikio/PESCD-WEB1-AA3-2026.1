@@ -48,6 +48,10 @@ public class OfertaService {
         }
         // S.01 RN-4: registra quem e quando criou (apenas em criação nova)
         if (oferta.getId() == null) {
+            // S.01 RN-5: toda oferta precisa ter um professor responsável ao ser criada
+            if (oferta.getProfessorResponsavel() == null) {
+                throw new NegocioException("A oferta precisa ter um professor responsável.");
+            }
             oferta.setCriadoPor(criador);
             oferta.setCriadoEm(LocalDateTime.now());
         }

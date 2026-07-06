@@ -1,15 +1,16 @@
 package br.ufscar.dc.dsw.pescd.controller;
 
 import br.ufscar.dc.dsw.pescd.config.UsuarioLogadoUtil;
+import br.ufscar.dc.dsw.pescd.dto.InscricaoOfertaResponseDTO;
 import br.ufscar.dc.dsw.pescd.model.InscricaoOferta;
 import br.ufscar.dc.dsw.pescd.model.Usuario;
 import br.ufscar.dc.dsw.pescd.repository.InscricaoOfertaRepository;
 import br.ufscar.dc.dsw.pescd.repository.UsuarioRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -26,9 +27,13 @@ public class OfertaAlunoController {
     }
 
     @GetMapping("/ofertas")
-    public ResponseEntity<List<InscricaoOferta>> listarOfertas() {
+    public List<InscricaoOfertaResponseDTO> listarOfertas() {
         Usuario aluno = UsuarioLogadoUtil.getUsuarioLogado(usuarioRepository);
         List<InscricaoOferta> inscricoes = inscricaoRepository.findByAluno(aluno);
-        return ResponseEntity.ok(inscricoes);
+        List<InscricaoOfertaResponseDTO> resposta = new ArrayList<>();
+        for (InscricaoOferta inscricao : inscricoes) {
+            resposta.add(new InscricaoOfertaResponseDTO(inscricao));
+        }
+        return resposta;
     }
 }

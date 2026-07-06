@@ -64,13 +64,19 @@ public class InscricaoOfertaService {
     }
 
     /**
-     * S.02 - Inscreve aluno na oferta.
+     * S.02 - Inscreve aluno na oferta, sem definir professor supervisor específico
+     * (usa o professor responsável da oferta como supervisor padrão).
      * RN-1: aluno não pode ser inscrito duas vezes na mesma oferta.
      */
     public void inscrever(Usuario aluno, Oferta oferta) {
-        inscrever(aluno, oferta, null);
+        inscrever(aluno, oferta, oferta.getProfessorResponsavel());
     }
 
+    /**
+     * S.02 - Inscreve aluno na oferta com um professor supervisor específico
+     * (pode ser diferente do professor responsável da oferta).
+     * RN-1: aluno não pode ser inscrito duas vezes na mesma oferta.
+     */
     public void inscrever(Usuario aluno, Oferta oferta, Usuario supervisor) {
         if (inscricaoOfertaRepository.findByAlunoAndOferta(aluno, oferta).isPresent()) {
             throw new NegocioException("Aluno já está inscrito nesta oferta.");
@@ -113,7 +119,7 @@ public class InscricaoOfertaService {
                 usuarioRepository.save(aluno);
             }
             try {
-                inscrever(aluno, oferta, null);
+                inscrever(aluno, oferta);
                 sucessos++;
             } catch (RuntimeException ex) {
                 falhas.add(email + " (" + ex.getMessage() + ")");
